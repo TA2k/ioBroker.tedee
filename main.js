@@ -68,7 +68,7 @@ class Tedee extends utils.Adapter {
     this.log.info(`Getting devices from bridge ${this.config.bridgeip}`);
     await this.requestClient({
       method: 'get',
-      url: 'https://' + this.config.bridgeip + '/' + this.apiVersion + '/bridge',
+      url: 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/bridge',
       headers: {
         accept: '*/*',
         api_token: this.hashedAPIKey(),
@@ -92,7 +92,7 @@ class Tedee extends utils.Adapter {
       });
     await this.requestClient({
       method: 'get',
-      url: 'https://' + this.config.bridgeip + '/' + this.apiVersion + '/lock',
+      url: 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/lock',
       headers: {
         accept: '*/*',
         api_token: this.hashedAPIKey(),
@@ -178,7 +178,7 @@ class Tedee extends utils.Adapter {
     //receive list of webhooks
     await this.requestClient({
       methode: 'get',
-      url: 'https://' + this.config.bridgeip + '/' + this.apiVersion + '/callback',
+      url: 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/callback',
       headers: {
         accept: '*/*',
         api_token: this.hashedAPIKey(),
@@ -194,7 +194,7 @@ class Tedee extends utils.Adapter {
     //register webhook
     await this.requestClient({
       method: 'post',
-      url: 'https://' + this.config.bridgeip + '/' + this.apiVersion + '/callback',
+      url: 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/callback',
       headers: {
         accept: '*/*',
         api_token: this.hashedAPIKey(),
@@ -226,7 +226,7 @@ class Tedee extends utils.Adapter {
   async updateDevices() {
     await this.requestClient({
       method: 'get',
-      url: 'https://' + this.config.bridgeip + '/' + this.apiVersion + '/lock',
+      url: 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/lock',
       headers: {
         'Content-Type': 'application/json',
         api_token: this.hashedAPIKey(),
