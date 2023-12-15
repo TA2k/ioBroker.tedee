@@ -39,6 +39,21 @@ class Tedee extends utils.Adapter {
     this.reLoginTimeout = null;
     this.refreshTokenTimeout = null;
     this.session = {};
+    this.states = {
+      state: {
+        0: 'Uncalibrated',
+        1: 'Calibrating',
+        2: 'Unlocked',
+        3: 'SemiLocked',
+        4: 'Unlocking',
+        5: 'Locking',
+        6: 'Locked',
+        7: 'Pulled',
+        8: 'Pulling',
+        9: 'Unknown',
+        18: 'Updating',
+      },
+    };
   }
 
   /**
@@ -60,7 +75,7 @@ class Tedee extends utils.Adapter {
       return;
     }
 
-    this.subscribeStates('*.remote.*');
+    this.subscribeStates('*');
     await this.getDeviceList();
     await this.sleep(1500);
     await this.startWebhooks();
@@ -143,7 +158,7 @@ class Tedee extends utils.Adapter {
               native: {},
             });
           }
-          this.json2iob.parse(id, device, { forceIndex: true });
+          this.json2iob.parse(id, device, { forceIndex: true, states: this.states });
         }
       })
       .catch((error) => {
@@ -169,7 +184,7 @@ class Tedee extends utils.Adapter {
       if (req.body.data) {
         const deviceId = req.body.data.deviceId;
         if (deviceId) {
-          this.json2iob.parse(deviceId, req.body.data, { forceIndex: true });
+          this.json2iob.parse(deviceId, req.body.data, { forceIndex: true, states: this.states });
         } else {
           this.json2iob.parse('bridge', req.body.data, { forceIndex: true });
         }
@@ -218,7 +233,7 @@ class Tedee extends utils.Adapter {
         this.log.debug(JSON.stringify(res.data));
         for (const webhook of res.data) {
           this.log.info('Deleting webhook ' + webhook.id + ' ' + webhook.url);
-          await this.sleep(1500);
+
           await this.requestClient({
             method: 'delete',
             url: 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/callback/' + webhook.id,
@@ -235,6 +250,7 @@ class Tedee extends utils.Adapter {
               this.log.error(error);
               error.response && this.log.error(JSON.stringify(error.response.data));
             });
+          await this.sleep(1500);
         }
       })
       .catch((error) => {
@@ -267,7 +283,7 @@ class Tedee extends utils.Adapter {
       .then(async (res) => {
         this.log.debug(JSON.stringify(res.data));
         for (const device of res.data) {
-          this.json2iob.parse(device.id, device, { forceIndex: true });
+          this.json2iob.parse(device.id, device, { forceIndex: true, states: this.states });
         }
       })
       .catch((error) => {
@@ -428,6 +444,22 @@ class Tedee extends utils.Adapter {
             this.log.error(error);
             error.response && this.log.error(JSON.stringify(error.response.data));
           });
+      } else {
+        if (id.split('.')[3] === 'state') {
+          const deviceId = id.split('.')[2];
+          if (state.val === 2 || state.val === 7 || state.val === 18) {
+            this.setState(deviceId + '.remote.lock', false, true);
+            this.setState(deviceId + '.remote.unlock', true, true);
+          }
+          if (state.val === 7) {
+            this.setState(deviceId + '.remote.pull', true, true);
+          }
+          if (state.val === 6) {
+            this.setState(deviceId + '.remote.lock', true, true);
+            this.setState(deviceId + '.remote.unlock', false, true);
+            this.setState(deviceId + '.remote.pull', false, true);
+          }
+        }
       }
       this.refreshTimeout && clearTimeout(this.refreshTimeout);
       this.refreshTimeout = setTimeout(() => {
