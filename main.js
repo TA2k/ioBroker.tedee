@@ -62,6 +62,7 @@ class Tedee extends utils.Adapter {
 
     this.subscribeStates('*.remote.*');
     await this.getDeviceList();
+    await this.sleep(1500);
     await this.startWebhooks();
   }
   async getDeviceList() {
@@ -177,6 +178,7 @@ class Tedee extends utils.Adapter {
     });
     //receive list of webhooks
     await this.cleanWebhooks();
+    await this.sleep(1500);
     //register webhook
     this.log.debug('Registering webhook');
     await this.requestClient({
@@ -216,6 +218,7 @@ class Tedee extends utils.Adapter {
         this.log.debug(JSON.stringify(res.data));
         for (const webhook of res.data) {
           this.log.info('Deleting webhook ' + webhook.id + ' ' + webhook.url);
+          await this.sleep(1500);
           await this.requestClient({
             method: 'delete',
             url: 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/callback/' + webhook.id,
@@ -239,7 +242,9 @@ class Tedee extends utils.Adapter {
         error.response && this.log.error(JSON.stringify(error.response.data));
       });
   }
-
+  async sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
   hashedAPIKey() {
     //api_key = SHA256(token + timestamp) + timestamp
     const timestamp = Date.now();
