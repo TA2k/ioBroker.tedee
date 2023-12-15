@@ -1,0 +1,111 @@
+{
+  "common": {
+    "name": "tedee",
+    "version": "0.0.1",
+    "news": {
+      "0.0.1": {
+        "en": "initial release",
+        "de": "Erstveröffentlichung",
+        "ru": "Начальная версия",
+        "pt": "lançamento inicial",
+        "nl": "Eerste uitgave",
+        "fr": "Première version",
+        "it": "Versione iniziale",
+        "es": "Versión inicial",
+        "pl": "Pierwsze wydanie",
+        "uk": "Початкова версія",
+        "zh-cn": "首次出版"
+      }
+    },
+    "titleLang": {
+      "en": "Tedee",
+      "de": "Tedee",
+      "ru": "Теди",
+      "pt": "Tedee",
+      "nl": "Tedee",
+      "fr": "Tédée",
+      "it": "Tedee",
+      "es": "tedée",
+      "pl": "Tedee",
+      "uk": "Теді",
+      "zh-cn": "泰迪"
+    },
+    "desc": {
+      "en": "Adapter for Tedee Locks",
+      "de": "Adapter für Tedee-Schlösser",
+      "ru": "Адаптер для замков Tedee",
+      "pt": "Adaptador para fechaduras Tedee",
+      "nl": "Adapter voor Tedee-sloten",
+      "fr": "Adaptateur pour serrures Tedee",
+      "it": "Adattatore per serrature Tedee",
+      "es": "Adaptador para cerraduras Tedee",
+      "pl": "Adapter do zamków Tedee",
+      "uk": "Адаптер для замків Tedee",
+      "zh-cn": "Tedee 锁适配器"
+    },
+    "authors": ["TA2k <tombox2020@gmail.com>"],
+    "keywords": ["tedee"],
+    "license": "MIT",
+    "platform": "Javascript/Node.js",
+    "main": "main.js",
+    "icon": "tedee.png",
+    "enabled": true,
+    "extIcon": "https://raw.githubusercontent.com/TA2k/ioBroker.tedee/main/admin/tedee.png",
+    "readme": "https://github.com/TA2k/ioBroker.tedee/blob/main/README.md",
+    "loglevel": "info",
+    "mode": "daemon",
+    "type": "hardware",
+    "compact": true,
+    "connectionType": "cloud",
+    "dataSource": "poll",
+    "adminUI": {
+      "config": "json"
+    },
+    "dependencies": [
+      {
+        "js-controller": ">=3.3.22"
+      }
+    ],
+    "globalDependencies": [
+      {
+        "admin": ">=5.1.13"
+      }
+    ],
+    "plugins": {
+      "sentry": {
+        "dsn": "https://802f699c7aa84a62b0bcb54b31485352@sentry.iobroker.net/226"
+      }
+    }
+  },
+  "encryptedNative": ["password"],
+  "protectedNative": ["password"],
+  "native": {
+    "bridgeip": "",
+    "token": "",
+    "interval": 30
+  },
+  "objects": [],
+  "instanceObjects": [
+    {
+      "_id": "info",
+      "type": "channel",
+      "common": {
+        "name": "Information"
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.connection",
+      "type": "state",
+      "common": {
+        "role": "indicator.connected",
+        "name": "Device or service connected",
+        "type": "boolean",
+        "read": true,
+        "write": false,
+        "def": false
+      },
+      "native": {}
+    }
+  ]
+}

@@ -1,0 +1,111 @@
+{
+  "i18n": false,
+  "items": {
+    "_access": {
+      "type": "panel",
+      "items": {
+        "bridgeip": {
+          "type": "ip",
+          "label": {
+            "en": "Bridge IP",
+            "de": "Bridge IP",
+            "ru": "Мост Ip",
+            "pt": "Ponte Ip",
+            "nl": "Bridge Ip",
+            "fr": "Bridge Ip",
+            "it": "Ponte Ip",
+            "es": "Puente Ip",
+            "pl": "Bridge",
+            "uk": "Міст Ip",
+            "zh-cn": "Bridge Ip"
+          },
+          "newLine": true,
+          "sm": 3
+        },
+        "token": {
+          "type": "password",
+          "newLine": true,
+          "repeat": false,
+          "visible": true,
+          "sm": 3,
+          "label": {
+            "en": "Bridge Token",
+            "de": "Bridge Token",
+            "ru": "Мост Токен",
+            "pt": "Token de ponte",
+            "nl": "Bridge Token",
+            "fr": "Bridge Token",
+            "it": "Token del ponte",
+            "es": "Puente Token",
+            "pl": "Bridge Token (ang.)",
+            "uk": "Міст Token",
+            "zh-cn": "Bridge Token"
+          }
+        },
+        "_description": {
+          "type": "staticText",
+          "label": {
+            "en": "Open Tedee app. Enable Beta Testing in the user profile. Go to selected Bridge -> Settings -> API -> then toggle the switch button."
+          },
+          "newLine": true,
+          "sm": 12
+        },
+        "_docLink": {
+          "type": "staticLink",
+          "label": {
+            "en": "Documentation",
+            "de": "Dokumentation",
+            "ru": "Документация",
+            "pt": "Documentação",
+            "nl": "Documentatie",
+            "fr": "Documentation",
+            "it": "Documentazione",
+            "es": "Documentación",
+            "pl": "Dokumentacja",
+            "uk": "Документація",
+            "zh-cn": "文档"
+          },
+          "href": "https://docs.tedee.com/bridge-api#tag/Getting-started",
+          "newLine": true,
+          "sm": 12
+        },
+        "_image": {
+          "type": "staticImage",
+          "src": "./tedee_api.png",
+          "newLine": true,
+          "sm": 12
+        },
+        "webhookIp": {
+          "type": "ip",
+          "label": "Available own Network Interface IPs",
+          "listenOnAllPorts": true,
+          "onlyIp4": true,
+          "noInternal": true,
+          "sm": 6,
+          "newLine": true,
+          "help": "Select Network Interface IP to listen for Webhooks. If you don't know what this is, leave it empty."
+        }
+      }
+    },
+
+    "interval": {
+      "type": "number",
+      "newLine": true,
+      "min": 1,
+      "sm": 2,
+      "label": {
+        "en": "Update interval (in seconds). If webhooks are not working",
+        "de": "Update-Intervall (in Sekunden). Wenn Webhooks nicht funktionieren",
+        "ru": "Интервал обновления (в секундах). Если webhooks не работает",
+        "pt": "Intervalo de atualização (em segundos). Se webhooks não estão funcionando",
+        "nl": "Update interval (in seconden) Als webhooks niet werken",
+        "fr": "Mettre à jour l'intervalle (en secondes). Si webhooks ne fonctionnent pas",
+        "it": "Intervallo di aggiornamento (in secondi). Se i webhooks non funzionano",
+        "es": "Intervalo de actualización (en segundos). Si los webhooks no funcionan",
+        "pl": "Update interval (ang.). Jeśli węże nie będą pracować",
+        "uk": "Період оновлення (в секундах). Якщо webhooks не працюють",
+        "zh-cn": "最新间隔(第二期)。 如果网址不工作"
+      }
+    }
+  }
+}
