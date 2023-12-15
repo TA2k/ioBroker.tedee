@@ -176,21 +176,7 @@ class Tedee extends utils.Adapter {
       res.send('OK');
     });
     //receive list of webhooks
-    await this.requestClient({
-      methode: 'get',
-      url: 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/callback',
-      headers: {
-        accept: '*/*',
-        api_token: this.hashedAPIKey(),
-      },
-    })
-      .then(async (res) => {
-        this.log.debug(JSON.stringify(res.data));
-      })
-      .catch((error) => {
-        this.log.error(error);
-        error.response && this.log.error(JSON.stringify(error.response.data));
-      });
+    await this.cleanWebhooks();
     //register webhook
     this.log.debug('Registering webhook');
     await this.requestClient({
@@ -212,6 +198,43 @@ class Tedee extends utils.Adapter {
       })
       .catch((error) => {
         this.log.error("Couldn't register webhook");
+        this.log.error(error);
+        error.response && this.log.error(JSON.stringify(error.response.data));
+      });
+  }
+
+  async cleanWebhooks() {
+    await this.requestClient({
+      methode: 'get',
+      url: 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/callback',
+      headers: {
+        accept: '*/*',
+        api_token: this.hashedAPIKey(),
+      },
+    })
+      .then(async (res) => {
+        this.log.debug(JSON.stringify(res.data));
+        for (const webhook of res.data) {
+          this.log.info('Deleting webhook ' + webhook.id + ' ' + webhook.url);
+          await this.requestClient({
+            method: 'delete',
+            url: 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/callback/' + webhook.id,
+            headers: {
+              accept: '*/*',
+              api_token: this.hashedAPIKey(),
+            },
+          })
+            .then((res) => {
+              this.log.debug(JSON.stringify(res.data));
+              this.log.info('Webhook deleted');
+            })
+            .catch((error) => {
+              this.log.error(error);
+              error.response && this.log.error(JSON.stringify(error.response.data));
+            });
+        }
+      })
+      .catch((error) => {
         this.log.error(error);
         error.response && this.log.error(JSON.stringify(error.response.data));
       });
@@ -350,8 +373,9 @@ class Tedee extends utils.Adapter {
    * Is called when adapter shuts down - callback has to be called under any circumstances!
    * @param {() => void} callback
    */
-  onUnload(callback) {
+  async onUnload(callback) {
     try {
+      await this.cleanWebhooks();
       this.setState('info.connection', false, true);
       this.refreshTimeout && clearTimeout(this.refreshTimeout);
       this.reLoginTimeout && clearTimeout(this.reLoginTimeout);
@@ -385,7 +409,7 @@ class Tedee extends utils.Adapter {
 
         await this.requestClient({
           method: 'POST',
-          url: 'https://' + this.config.bridgeip + '/' + this.apiVersion + '/' + deviceId + '/' + command,
+          url: 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/' + deviceId + '/' + command,
           headers: {
             acceot: '*/*',
             api_token: this.hashedAPIKey(),
