@@ -411,10 +411,11 @@ class Tedee extends utils.Adapter {
           this.updateDevices();
           return;
         }
-
+        const url = 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/lock/' + deviceId + '/' + command;
+        this.log.debug('Sending url: ' + url);
         await this.requestClient({
           method: 'POST',
-          url: 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/' + deviceId + '/' + command,
+          url: url,
           headers: {
             acceot: '*/*',
             api_token: this.hashedAPIKey(),
