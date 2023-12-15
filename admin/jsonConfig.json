@@ -5,7 +5,7 @@
       "type": "panel",
       "items": {
         "bridgeip": {
-          "type": "ip",
+          "type": "text",
           "label": {
             "en": "Bridge IP",
             "de": "Bridge IP",
@@ -71,7 +71,19 @@
         },
         "_image": {
           "type": "staticImage",
-          "src": "./tedee_api.png",
+          "src": "../admin/tedee_api.png",
+          "newLine": true,
+          "sm": 12
+        },
+        "_image2": {
+          "type": "staticImage",
+          "src": "./admin/tedee_api.png",
+          "newLine": true,
+          "sm": 12
+        },
+        "_image3": {
+          "type": "staticImage",
+          "src": "../../admin/tedee_api.png",
           "newLine": true,
           "sm": 12
         },
