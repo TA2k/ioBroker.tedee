@@ -71,22 +71,11 @@
         },
         "_image": {
           "type": "staticImage",
-          "src": "../admin/tedee_api.png",
+          "src": "https://raw.githubusercontent.com/TA2k/ioBroker.tedee/main/admin/tedee_api.png",
           "newLine": true,
           "sm": 12
         },
-        "_image2": {
-          "type": "staticImage",
-          "src": "./admin/tedee_api.png",
-          "newLine": true,
-          "sm": 12
-        },
-        "_image3": {
-          "type": "staticImage",
-          "src": "../../admin/tedee_api.png",
-          "newLine": true,
-          "sm": 12
-        },
+
         "webhookIp": {
           "type": "ip",
           "label": "Available own Network Interface IPs",

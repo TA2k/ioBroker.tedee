@@ -22,8 +22,11 @@ class Tedee extends utils.Adapter {
       ...options,
       name: 'tedee',
     });
-    this.deviceArray = [];
 
+    this.on('ready', this.onReady.bind(this));
+    this.on('stateChange', this.onStateChange.bind(this));
+    this.on('unload', this.onUnload.bind(this));
+    this.deviceArray = [];
     this.userAgent = 'ioBroker v' + this.version;
     this.apiVersion = 'v1.0';
     this.json2iob = new Json2iob(this);
@@ -72,6 +75,7 @@ class Tedee extends utils.Adapter {
       },
     })
       .then(async (res) => {
+        this.setState('info.connection', true, true);
         this.log.debug(JSON.stringify(res.data));
         await this.extendObjectAsync('bridge', {
           type: 'device',
