@@ -192,6 +192,7 @@ class Tedee extends utils.Adapter {
         error.response && this.log.error(JSON.stringify(error.response.data));
       });
     //register webhook
+    this.log.debug('Registering webhook');
     await this.requestClient({
       method: 'post',
       url: 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/callback',
@@ -202,6 +203,7 @@ class Tedee extends utils.Adapter {
       },
       data: {
         url: 'http://' + host + ':' + port + '/webhook',
+        headers: [],
       },
     })
       .then(async (res) => {
@@ -209,6 +211,7 @@ class Tedee extends utils.Adapter {
         this.log.info('Webhook registered');
       })
       .catch((error) => {
+        this.log.error("Couldn't register webhook");
         this.log.error(error);
         error.response && this.log.error(JSON.stringify(error.response.data));
       });
