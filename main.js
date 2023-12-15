@@ -103,7 +103,7 @@ class Tedee extends utils.Adapter {
         this.log.info(`Found ${res.data.length} devices`);
 
         for (const device of res.data) {
-          const id = device.id;
+          const id = device.id.toString();
           const name = device.name;
           this.deviceArray.push(device);
 
@@ -198,6 +198,7 @@ class Tedee extends utils.Adapter {
       headers: {
         accept: '*/*',
         api_token: this.hashedAPIKey(),
+        content_type: 'application/json',
       },
       data: {
         url: 'http://' + host + ':' + port + '/webhook',
