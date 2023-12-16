@@ -159,6 +159,7 @@ class Tedee extends utils.Adapter {
                 type: remote.type || 'boolean',
                 role: remote.role || 'boolean',
                 def: remote.def == null ? false : remote.def,
+                states: remote.states,
                 write: true,
                 read: true,
               },
