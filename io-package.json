@@ -57,12 +57,8 @@
       "uk": "Адаптер для замків Tedee",
       "zh-cn": "Tedee 锁适配器"
     },
-    "authors": [
-      "TA2k <tombox2020@gmail.com>"
-    ],
-    "keywords": [
-      "tedee"
-    ],
+    "authors": ["TA2k <tombox2020@gmail.com>"],
+    "keywords": ["tedee"],
     "license": "MIT",
     "platform": "Javascript/Node.js",
     "main": "main.js",
@@ -74,8 +70,8 @@
     "mode": "daemon",
     "type": "hardware",
     "compact": true,
-    "connectionType": "cloud",
-    "dataSource": "poll",
+    "connectionType": "local",
+    "dataSource": "push",
     "adminUI": {
       "config": "json"
     },
@@ -95,12 +91,8 @@
       }
     }
   },
-  "encryptedNative": [
-    "password"
-  ],
-  "protectedNative": [
-    "password"
-  ],
+  "encryptedNative": ["token"],
+  "protectedNative": ["token"],
   "native": {
     "bridgeip": "",
     "token": "",

@@ -84,6 +84,9 @@ class Tedee extends utils.Adapter {
     await this.getDeviceList();
     await this.sleep(1500);
     await this.startWebhooks();
+    this.updateInterval = setInterval(() => {
+      this.updateDevices();
+    }, this.config.interval * 1000);
   }
   async getDeviceList() {
     this.log.info(`Getting devices from bridge ${this.config.bridgeip}`);
@@ -124,7 +127,7 @@ class Tedee extends utils.Adapter {
         this.log.info(`Found ${res.data.length} devices`);
 
         for (const device of res.data) {
-          const id = device.id.toString();
+          const id = device.id.toString().replace(this.FORBIDDEN_CHARS, '_');
           const name = device.name;
           this.deviceArray.push(device);
 
@@ -164,7 +167,7 @@ class Tedee extends utils.Adapter {
               common: {
                 name: remote.name || '',
                 type: remote.type || 'boolean',
-                role: remote.role || 'boolean',
+                role: remote.role || 'switch',
                 def: remote.def == null ? false : remote.def,
                 states: remote.states,
                 write: true,
