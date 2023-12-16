@@ -51,6 +51,13 @@ class Tedee extends utils.Adapter {
         9: 'Unknown',
         18: 'Updating',
       },
+      type: {
+        1: 'Bridge',
+        2: 'Lock PRO',
+        3: 'Keypad',
+        4: 'Lock GO',
+        5: 'Gate',
+      },
     };
   }
 
@@ -126,7 +133,7 @@ class Tedee extends utils.Adapter {
             common: {
               name: name,
             },
-            native: {},
+            native: { type: device.type },
           });
           await this.setObjectNotExistsAsync(id + '.remote', {
             type: 'channel',
@@ -135,20 +142,22 @@ class Tedee extends utils.Adapter {
             },
             native: {},
           });
-
-          const remoteArray = [
-            { command: 'refresh', name: 'True = Refresh' },
-            { command: 'lock', name: 'True = Lock, False = Unlock' },
-            {
-              command: 'unlock',
-              name: 'Unlock',
-              type: 'number',
-              role: 'level',
-              def: 0,
-              states: { 0: 'Unlock', 2: 'Force Unlock', 3: 'Without auto pull spring', 4: 'Unlock or pull spring' },
-            },
-            { command: 'pull', name: 'True = Pull' },
-          ];
+          let remoteArray = [];
+          if (device.type === 2 || device.type === 4) {
+            remoteArray = [
+              { command: 'refresh', name: 'True = Refresh' },
+              { command: 'lock', name: 'True = Lock, False = Unlock' },
+              {
+                command: 'unlock',
+                name: 'Unlock',
+                type: 'number',
+                role: 'level',
+                def: 0,
+                states: { 0: 'Unlock', 2: 'Force Unlock', 3: 'Without auto pull spring', 4: 'Unlock or pull spring' },
+              },
+              { command: 'pull', name: 'True = Pull' },
+            ];
+          }
           for (const remote of remoteArray) {
             this.extendObject(id + '.remote.' + remote.command, {
               type: 'state',
@@ -332,7 +341,7 @@ class Tedee extends utils.Adapter {
           return;
         }
 
-        if (command === 'Refresh') {
+        if (command === 'refresh') {
           this.updateDevices();
           return;
         }
