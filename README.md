@@ -63,8 +63,7 @@ Unlock modes:
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-
-### **WORK IN PROGRESS**
+### 0.1.0 (2023-12-16)
 
 - (TA2k) initial release
 
