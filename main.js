@@ -465,14 +465,13 @@ class Tedee extends utils.Adapter {
           const deviceId = id.split('.')[2];
           if (state.val === 2 || state.val === 7 || state.val === 18) {
             this.setState(deviceId + '.remote.lock', false, true);
-            this.setState(deviceId + '.remote.unlock', true, true);
+            this.setState(deviceId + '.remote.unlock', 0, true);
           }
           if (state.val === 7) {
             this.setState(deviceId + '.remote.pull', true, true);
           }
           if (state.val === 6) {
             this.setState(deviceId + '.remote.lock', true, true);
-            this.setState(deviceId + '.remote.unlock', false, true);
             this.setState(deviceId + '.remote.pull', false, true);
           }
         }
