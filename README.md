@@ -25,7 +25,22 @@ This Adapter uses the local bridge API to control a tedee lock
 
 ![Logo](admin/tedee_api.png)
 
-The Adapter receives all status update immediatly via webhooks. The interval in the settings is only a backup for continously refreshs.
+The Adapter receives all status update immediatly via webhooks. The interval in the settings is only a backup for continuously refreshs.
+
+Current State of a lock:
+tedee.0.id.state
+
+- 0 Uncalibrated
+- 1 Calibrating
+- 2 Unlocked
+- 3 SemiLocked
+- 4 Unlocking
+- 5 Locking
+- 6 Locked
+- 7 Pulled
+- 8 Pulling
+- 9 Unknown
+- 18 Updating
 
 ## Usage
 
