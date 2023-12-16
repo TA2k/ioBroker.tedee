@@ -141,7 +141,14 @@ class Tedee extends utils.Adapter {
           const remoteArray = [
             { command: 'refresh', name: 'True = Refresh' },
             { command: 'lock', name: 'True = Lock' },
-            { command: 'unlock', name: 'True = Unlock' },
+            {
+              command: 'unlock',
+              name: 'Unlock',
+              type: 'number',
+              role: 'level',
+              def: 0,
+              states: { 0: 'Unlock', 2: 'Force Unlock', 3: 'Without auto pull spring', 4: 'Unlock or pull spring' },
+            },
             { command: 'pull', name: 'True = Pull' },
           ];
           for (const remote of remoteArray) {
@@ -418,7 +425,7 @@ class Tedee extends utils.Adapter {
     if (state) {
       if (!state.ack) {
         const deviceId = id.split('.')[2];
-        const command = id.split('.')[4];
+        let command = id.split('.')[4];
         if (id.split('.')[3] !== 'remote') {
           return;
         }
@@ -426,6 +433,13 @@ class Tedee extends utils.Adapter {
         if (command === 'Refresh') {
           this.updateDevices();
           return;
+        }
+        if (state.val === false && command === 'lock') {
+          command = 'unlock';
+        }
+        let mode;
+        if (command === 'unlock') {
+          mode = state.val || 0;
         }
         const url = 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/lock/' + deviceId + '/' + command;
         this.log.debug('Sending url: ' + url);
@@ -435,6 +449,7 @@ class Tedee extends utils.Adapter {
           headers: {
             acceot: '*/*',
             api_token: this.hashedAPIKey(),
+            mode: mode || '',
           },
         })
           .then(async (res) => {
