@@ -36,8 +36,6 @@ class Tedee extends utils.Adapter {
       timeout: 3 * 60 * 1000, //3min client timeout
     });
     this.updateInterval = null;
-    this.reLoginTimeout = null;
-    this.refreshTokenTimeout = null;
     this.session = {};
     this.states = {
       state: {
@@ -309,10 +307,7 @@ class Tedee extends utils.Adapter {
       await this.cleanWebhooks();
       this.setState('info.connection', false, true);
       this.refreshTimeout && clearTimeout(this.refreshTimeout);
-      this.reLoginTimeout && clearTimeout(this.reLoginTimeout);
-      this.refreshTokenTimeout && clearTimeout(this.refreshTokenTimeout);
       this.updateInterval && clearInterval(this.updateInterval);
-      // this.refreshTokenInterval && clearInterval(this.refreshTokenInterval);
       callback();
     } catch (e) {
       callback();
