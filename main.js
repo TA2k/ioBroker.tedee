@@ -227,6 +227,10 @@ class Tedee extends utils.Adapter {
   }
 
   async cleanWebhooks() {
+    if (!this.config.bridgeip || !this.config.token) {
+      return;
+    }
+
     await this.requestClient({
       methode: 'get',
       url: 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/callback',
