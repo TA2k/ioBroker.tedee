@@ -140,7 +140,7 @@ class Tedee extends utils.Adapter {
 
           const remoteArray = [
             { command: 'refresh', name: 'True = Refresh' },
-            { command: 'lock', name: 'True = Lock' },
+            { command: 'lock', name: 'True = Lock, False = Unlock' },
             {
               command: 'unlock',
               name: 'Unlock',
@@ -299,105 +299,7 @@ class Tedee extends utils.Adapter {
         error.response && this.log.error(JSON.stringify(error.response.data));
       });
   }
-  /*
-  async refreshToken() {}
-  async loginViaApi() {
-    await this.requestClient({
-      method: 'post',
-      url: 'https://tedee.b2clogin.com/tedee.onmicrosoft.com/oauth2/v2.0/token?p=B2C_1_SignIn_Ropc',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      data: {
-        username: this.config.username,
-        grant_type: 'password',
-        password: this.config.password,
-        scope: 'openid 02106b82-0524-4fd3-ac57-af774f340979',
-        client_id: '02106b82-0524-4fd3-ac57-af774f340979',
-        response_type: 'token id_token',
-      },
-    })
-      .then((res) => {
-        this.log.debug(JSON.stringify(res.data));
-        this.session = res.data;
-        this.log.info('Login successful');
-        this.setState('info.connection', true, true);
-      })
-      .catch((error) => {
-        this.log.error(error);
-        this.log.error('Login failed');
-        error.response && this.log.error(JSON.stringify(error.response.data));
-      });
-  }
 
-  async getDeviceListViaApi() {
-    await this.requestClient({
-      method: 'get',
-      url: 'https://api.tedee.com/api/' + this.apiVersion + '/my/Device/details?includeUserSettings=true',
-      headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        Authorization: 'Bearer ' + this.session.access_token,
-      },
-    })
-      .then(async (res) => {
-        this.log.debug(JSON.stringify(res.data));
-        const result = res.data.result;
-        if (result) {
-          for (const type of result) {
-            this.log.info('Found ' + result[type].length + ' ' + type);
-
-            for (const device of result[type]) {
-              const id = device.id;
-              const name = device.name;
-
-              device.deviceType = type;
-              this.deviceArray.push(device);
-
-              await this.setObjectNotExistsAsync(id, {
-                type: 'device',
-                common: {
-                  name: name,
-                },
-                native: {},
-              });
-              await this.setObjectNotExistsAsync(id + '.remote', {
-                type: 'channel',
-                common: {
-                  name: 'Remote Controls',
-                },
-                native: {},
-              });
-
-              const remoteArray = [
-                { command: 'refresh', name: 'True = Refresh' },
-                { command: 'lock', name: 'True = Lock' },
-                { command: 'unlock', name: 'True = Unlock' },
-                { command: 'pull', name: 'True = Pull' },
-              ];
-              for (const remote of remoteArray) {
-                this.extendObject(id + '.remote.' + remote.command, {
-                  type: 'state',
-                  common: {
-                    name: remote.name || '',
-                    type: remote.type || 'boolean',
-                    role: remote.role || 'boolean',
-                    def: remote.def == null ? false : remote.def,
-                    write: true,
-                    read: true,
-                  },
-                  native: {},
-                });
-              }
-              this.json2iob.parse(id, device, { forceIndex: true });
-            }
-          }
-        }
-      })
-      .catch((error) => {
-        this.log.error(error);
-        error.response && this.log.error(JSON.stringify(error.response.data));
-      });
-  }*/
   /**
    * Is called when adapter shuts down - callback has to be called under any circumstances!
    * @param {() => void} callback

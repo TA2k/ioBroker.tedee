@@ -17,7 +17,30 @@
 
 Adapter for Tedee Locks
 
+This Adapter uses the local bridge API to control a tedee lock
+
+1. Activate Beta Testing in your user profile
+2. Enable API in the bridge settings
+3. Copy the IP and the token in the instance settings
+
+![Logo](admin/tedee_api.png)
+
+The Adapter receives all status update immediatly via webhooks. The interval in the settings is only a backup for continously refreshs.
+
 ## Usage
+
+You can control the tedee lock via tedee.0.id.remote
+
+- lock to Lock/Unlock
+- pull to Pull
+- unlock unlock
+
+Unlock modes:
+
+- 0 - (or no parameter set) - Normal. From close position: unlock only or unlock with auto pull if enabled. From open position: nothing.
+- 2 - Force. Force movement until lock hits resistance.
+- 3 - Without Pull. From close position: unlock only without auto pull. From open position: nothing.
+- 4 - Unlock or Pull. From close position: unlock only or unlock with auto pull if enabled. From open position: pull.
 
 ## Changelog
 
@@ -28,7 +51,7 @@ Adapter for Tedee Locks
 
 ### **WORK IN PROGRESS**
 
--   (TA2k) initial release
+- (TA2k) initial release
 
 ## License
 

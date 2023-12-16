@@ -1,92 +1,87 @@
 {
   "i18n": false,
+  "type": "panel",
   "items": {
-    "_access": {
-      "type": "panel",
-      "items": {
-        "bridgeip": {
-          "type": "text",
-          "label": {
-            "en": "Bridge IP",
-            "de": "Bridge IP",
-            "ru": "Мост Ip",
-            "pt": "Ponte Ip",
-            "nl": "Bridge Ip",
-            "fr": "Bridge Ip",
-            "it": "Ponte Ip",
-            "es": "Puente Ip",
-            "pl": "Bridge",
-            "uk": "Міст Ip",
-            "zh-cn": "Bridge Ip"
-          },
-          "newLine": true,
-          "sm": 3
-        },
-        "token": {
-          "type": "password",
-          "newLine": true,
-          "repeat": false,
-          "visible": true,
-          "sm": 3,
-          "label": {
-            "en": "Bridge Token",
-            "de": "Bridge Token",
-            "ru": "Мост Токен",
-            "pt": "Token de ponte",
-            "nl": "Bridge Token",
-            "fr": "Bridge Token",
-            "it": "Token del ponte",
-            "es": "Puente Token",
-            "pl": "Bridge Token (ang.)",
-            "uk": "Міст Token",
-            "zh-cn": "Bridge Token"
-          }
-        },
-        "_description": {
-          "type": "staticText",
-          "label": {
-            "en": "Open Tedee app. Enable Beta Testing in the user profile. Go to selected Bridge -> Settings -> API -> then toggle the switch button."
-          },
-          "newLine": true,
-          "sm": 12
-        },
-        "_docLink": {
-          "type": "staticLink",
-          "label": {
-            "en": "Documentation",
-            "de": "Dokumentation",
-            "ru": "Документация",
-            "pt": "Documentação",
-            "nl": "Documentatie",
-            "fr": "Documentation",
-            "it": "Documentazione",
-            "es": "Documentación",
-            "pl": "Dokumentacja",
-            "uk": "Документація",
-            "zh-cn": "文档"
-          },
-          "href": "https://docs.tedee.com/bridge-api#tag/Getting-started",
-          "newLine": true,
-          "sm": 12
-        },
-        "_image": {
-          "type": "staticImage",
-          "src": "https://raw.githubusercontent.com/TA2k/ioBroker.tedee/main/admin/tedee_api.png",
-          "newLine": true,
-          "sm": 12
-        },
-
-        "webhookIp": {
-          "type": "ip",
-          "label": "Available own Network Interface IPs",
-          "listenOnAllPorts": true,
-          "onlyIp4": true,
-          "noInternal": true,
-          "sm": 6,
-          "newLine": true,
-          "help": "Select Network Interface IP to listen for Webhooks. If you don't know what this is, leave it empty."
-        }
+    "bridgeip": {
+      "type": "text",
+      "label": {
+        "en": "Bridge IP",
+        "de": "Bridge IP",
+        "ru": "Мост Ip",
+        "pt": "Ponte Ip",
+        "nl": "Bridge Ip",
+        "fr": "Bridge Ip",
+        "it": "Ponte Ip",
+        "es": "Puente Ip",
+        "pl": "Bridge",
+        "uk": "Міст Ip",
+        "zh-cn": "Bridge Ip"
+      },
+      "newLine": true,
+      "sm": 3
+    },
+    "token": {
+      "type": "password",
+      "newLine": true,
+      "repeat": false,
+      "visible": true,
+      "sm": 3,
+      "label": {
+        "en": "Bridge Token",
+        "de": "Bridge Token",
+        "ru": "Мост Токен",
+        "pt": "Token de ponte",
+        "nl": "Bridge Token",
+        "fr": "Bridge Token",
+        "it": "Token del ponte",
+        "es": "Puente Token",
+        "pl": "Bridge Token (ang.)",
+        "uk": "Міст Token",
+        "zh-cn": "Bridge Token"
       }
+    },
+    "_description": {
+      "type": "staticText",
+      "label": {
+        "en": "Open Tedee app. Enable Beta Testing in the user profile. Go to selected Bridge -> Settings -> API -> then toggle the switch button.",
+        "de": "Öffnen Sie Tedee App. Aktiviere Beta Testing im Benutzerprofil. In der Bridge -> Einstellungen -> API -> einschalten",
+        "ru": "Open Tedee приложение. Включить Beta Тестирование в профиле пользователя. Перейти к выбранному мосту -> Настройки -> API -> затем переключить кнопку переключения.",
+        "pt": "Abra o aplicativo Tedee. Ativar Beta Teste no perfil do usuário. Vá para Ponte selecionada -> Configurações -> API -> em seguida, alterne o botão de interruptor.",
+        "nl": "Open Tedee app. Beta Test in het gebruikersprofiel. Ga naar geselecteerde Brug, smokkelt de knop om.",
+        "fr": "Ouvrez l'application Tedee. Activer Beta Test dans le profil utilisateur. Allez sur le pont sélectionné - Paramètres phytosanitaires - Aptitude phytopathique puis le bouton de commutation.",
+        "it": "Apri l'app Tedee. Attiva Beta Test nel profilo utente. Vai a Ponte selezionato -> Impostazioni -> API -> quindi attivare il pulsante di interruttore.",
+        "es": "Abre la aplicación Tedee. Enable Beta Pruebas en el perfil de usuario. Vaya al puente seleccionado - Configuración de títulos - Contraseña API - confiar luego cambiar el botón de interruptor.",
+        "pl": "Otwarta aplikacja. Enable Beta Testowanie w profilu użytkownika. Go to selected Bridge -> Settings -> API -> -> - ulepszyć przycisk.",
+        "uk": "Відкрийте додаток Tedee. Увімкнути Beta Тестування в профілі користувача. Перейти до вибраного Міста -> Налаштування -> API -> потім toggle Кнопка перемикання.",
+        "zh-cn": "开放的受让人。 附录 用户概况的试验。 某些桥梁——配给—— —— SP- —— —— —— —— —— —— —— —— 然后将转换成顿。."
+      },
+      "newLine": true,
+      "sm": 12
+    },
+    "_docLink": {
+      "type": "staticLink",
+      "label": {
+        "en": "Documentation",
+        "de": "Dokumentation",
+        "ru": "Документация",
+        "pt": "Documentação",
+        "nl": "Documentatie",
+        "fr": "Documentation",
+        "it": "Documentazione",
+        "es": "Documentación",
+        "pl": "Dokumentacja",
+        "uk": "Документація",
+        "zh-cn": "文档"
+      },
+      "href": "https://docs.tedee.com/bridge-api#tag/Getting-started",
+      "newLine": true,
+      "sm": 12
+    },
+    "_image": {
+      "type": "staticImage",
+      "src": "https://raw.githubusercontent.com/TA2k/ioBroker.tedee/main/admin/tedee_api.png",
+      "newLine": true,
+      "sm": 12
     },
 
     "interval": {
@@ -95,17 +90,17 @@
       "min": 1,
       "sm": 2,
       "label": {
-        "en": "Update interval (in seconds). If webhooks are not working",
-        "de": "Update-Intervall (in Sekunden). Wenn Webhooks nicht funktionieren",
-        "ru": "Интервал обновления (в секундах). Если webhooks не работает",
-        "pt": "Intervalo de atualização (em segundos). Se webhooks não estão funcionando",
-        "nl": "Update interval (in seconden) Als webhooks niet werken",
-        "fr": "Mettre à jour l'intervalle (en secondes). Si webhooks ne fonctionnent pas",
-        "it": "Intervallo di aggiornamento (in secondi). Se i webhooks non funzionano",
-        "es": "Intervalo de actualización (en segundos). Si los webhooks no funcionan",
-        "pl": "Update interval (ang.). Jeśli węże nie będą pracować",
-        "uk": "Період оновлення (в секундах). Якщо webhooks не працюють",
-        "zh-cn": "最新间隔(第二期)。 如果网址不工作"
+        "en": "Update interval (in seconds). Only backup if webhooks are not working",
+        "de": "Update-Intervall (in Sekunden). Nur Backup, falls Webhooks nicht funktionieren",
+        "ru": "Интервал обновления (в секундах). Только резервное копирование, если webhooks не работает",
+        "pt": "Intervalo de atualização (em segundos). Apenas backup se webhooks não estão funcionando",
+        "nl": "Update interval (in seconden) Alleen back-up als webhooks niet werken",
+        "fr": "Mettre à jour l'intervalle (en secondes). Seulement la sauvegarde si webhooks ne fonctionnent pas",
+        "it": "Intervallo di aggiornamento (in secondi). Solo il backup se webhooks non funziona",
+        "es": "Intervalo de actualización (en segundos). Sólo respaldo si los webhooks no funcionan",
+        "pl": "Update interval (ang.). Tylko w przypadku, gdy węzły nie pracują",
+        "uk": "Період оновлення (в секундах). Тільки резервні копії, якщо webhooks не працює",
+        "zh-cn": "最新间隔(第二期)。 只有当网站没有工作时,才得到支持。"
       }
     }
   }

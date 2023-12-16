@@ -1,5 +1,6 @@
 {
   "common": {
+    "tier": 2,
     "name": "tedee",
     "version": "0.0.1",
     "news": {
@@ -82,7 +83,7 @@
   "native": {
     "bridgeip": "",
     "token": "",
-    "interval": 30
+    "interval": 60
   },
   "objects": [],
   "instanceObjects": [
