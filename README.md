@@ -66,7 +66,7 @@ Unlock modes:
     ### **WORK IN PROGRESS**
 -->
 
-### 0.2.0 (2023-12-16)
+### 0.3.0 (2023-12-16)
 
 - (TA2k) initial release
 
