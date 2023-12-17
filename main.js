@@ -131,7 +131,7 @@ class Tedee extends utils.Adapter {
           const name = device.name;
           this.deviceArray.push(device);
 
-          await this.setObjectNotExistsAsync(id, {
+          await this.extendObjectAsync(id, {
             type: 'device',
             common: {
               name: name,
