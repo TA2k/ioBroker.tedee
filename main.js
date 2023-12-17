@@ -190,6 +190,10 @@ class Tedee extends utils.Adapter {
     const port = await this.getPortAsync(29170);
     const listenHost = '0.0.0.0';
     const host = await this.host;
+    if (!host) {
+      this.log.error('No host found cannot start webhooks');
+      return;
+    }
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: true }));
     app.listen(port, () => {
