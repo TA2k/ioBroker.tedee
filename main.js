@@ -187,7 +187,7 @@ class Tedee extends utils.Adapter {
   async startWebhooks() {
     const app = express();
     const port = await this.getPortAsync(29170);
-    const host = await this.host;
+    const host = '0.0.0.0'; //await this.host;
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: true }));
     app.listen(port, () => {
@@ -197,7 +197,7 @@ class Tedee extends utils.Adapter {
       this.log.debug(JSON.stringify(req.body));
       if (this.firstWebhook == null) {
         this.firstWebhook = Date.now();
-        this.log.info('Webhook message received');
+        this.log.info('Webhook connected successfully');
       }
       if (req.body.data) {
         const deviceId = req.body.data.deviceId;
