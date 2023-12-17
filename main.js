@@ -128,6 +128,7 @@ class Tedee extends utils.Adapter {
 
         for (const device of res.data) {
           const id = device.id.toString().replace(this.FORBIDDEN_CHARS, '_');
+
           const name = device.name;
           this.deviceArray.push(device);
 
@@ -305,7 +306,8 @@ class Tedee extends utils.Adapter {
       .then(async (res) => {
         this.log.debug(JSON.stringify(res.data));
         for (const device of res.data) {
-          this.json2iob.parse(device.id, device, { forceIndex: true, states: this.states });
+          const id = device.id.toString().replace(this.FORBIDDEN_CHARS, '_');
+          this.json2iob.parse(id, device, { forceIndex: true, states: this.states });
         }
       })
       .catch((error) => {
