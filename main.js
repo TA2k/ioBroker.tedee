@@ -188,11 +188,12 @@ class Tedee extends utils.Adapter {
   async startWebhooks() {
     const app = express();
     const port = await this.getPortAsync(29170);
-    const host = '0.0.0.0'; //await this.host;
+    const listenHost = '0.0.0.0';
+    const host = await this.host;
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: true }));
     app.listen(port, () => {
-      this.log.info(`Webhooks listening at http://${host}:${port}`);
+      this.log.info(`Webhooks listening at http://${listenHost}:${port}`);
     });
     app.post('/webhook', async (req, res) => {
       this.log.debug(JSON.stringify(req.body));
@@ -214,7 +215,7 @@ class Tedee extends utils.Adapter {
     await this.cleanWebhooks();
     await this.sleep(1500);
     //register webhook
-    this.log.debug('Registering webhook');
+    this.log.info('Registering webhook ' + 'http://' + host + ':' + port + '/webhook');
     await this.requestClient({
       method: 'post',
       url: 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/callback',
