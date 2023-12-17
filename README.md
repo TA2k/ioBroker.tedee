@@ -19,6 +19,8 @@ Adapter for Tedee Locks
 
 This Adapter uses the local bridge API to control a tedee lock
 
+All Lock devices by Tedee are supported.
+
 1. Activate Beta Testing in your user profile
 2. Enable API in the bridge settings
 3. Copy the IP and the token in the instance settings
@@ -63,9 +65,14 @@ Unlock modes:
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+
 ### 0.1.0 (2023-12-16)
 
 - (TA2k) initial release
+
+## Disclaimer
+
+Tedee is a trademark of tedee. I am in no way endorsed by or affiliated with tedee, or any associated subsidiaries, logos or trademarks
 
 ## License
 
