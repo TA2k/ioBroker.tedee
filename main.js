@@ -206,7 +206,7 @@ class Tedee extends utils.Adapter {
         this.log.info('Webhook connected successfully');
       }
       if (req.body.data) {
-        const deviceId = req.body.data.deviceId;
+        const deviceId = req.body.data.deviceId.toString().replace(this.FORBIDDEN_CHARS, '_');
         if (deviceId) {
           this.json2iob.parse(deviceId, req.body.data, { forceIndex: true, states: this.states });
         } else {

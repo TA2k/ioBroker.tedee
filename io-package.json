@@ -2,9 +2,9 @@
   "common": {
     "tier": 2,
     "name": "tedee",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "news": {
-      "0.2.0": {
+      "0.3.0": {
         "en": "initial release",
         "de": "Erstveröffentlichung",
         "ru": "Начальная версия",
