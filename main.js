@@ -256,7 +256,7 @@ class Tedee extends utils.Adapter {
         this.log.debug(JSON.stringify(res.data));
         for (const webhook of res.data) {
           this.log.info('Deleting webhook ' + webhook.id + ' ' + webhook.url);
-
+          await this.sleep(500);
           await this.requestClient({
             method: 'delete',
             url: 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/callback/' + webhook.id,
@@ -273,7 +273,6 @@ class Tedee extends utils.Adapter {
               this.log.error(error);
               error.response && this.log.error(JSON.stringify(error.response.data));
             });
-          await this.sleep(1500);
         }
       })
       .catch((error) => {
