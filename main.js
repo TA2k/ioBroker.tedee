@@ -239,7 +239,7 @@ class Tedee extends utils.Adapter {
         this.log.info('Webhook registered');
       })
       .catch((error) => {
-        this.log.error("Couldn't register webhook");
+        this.log.error("Couldn't register webhook. Please try to restart the adapter.");
         this.log.error(error);
         error.response && this.log.error(JSON.stringify(error.response.data));
       });
@@ -316,8 +316,13 @@ class Tedee extends utils.Adapter {
         }
       })
       .catch((error) => {
-        this.log.error(error);
-        error.response && this.log.error(JSON.stringify(error.response.data));
+        //check for socket hangup
+        if (error.code === 'ECONNRESET') {
+          this.log.info('Bridge is busy. Cannot handle more requests');
+          return;
+        }
+        this.log.warn(error);
+        error.response && this.log.warn(JSON.stringify(error.response.data));
       });
   }
 
