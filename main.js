@@ -332,6 +332,8 @@ class Tedee extends utils.Adapter {
    */
   async onUnload(callback) {
     try {
+      //wait to prevent busy bridge
+      await this.sleep(500);
       await this.cleanWebhooks();
       this.setState('info.connection', false, true);
       this.refreshTimeout && clearTimeout(this.refreshTimeout);
