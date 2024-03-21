@@ -12,6 +12,7 @@ const Json2iob = require('json2iob');
 const crypto = require('crypto');
 const express = require('express');
 const bodyParser = require('body-parser');
+const axiosRetry = require('axios-retry').default;
 
 class Tedee extends utils.Adapter {
   /**
@@ -30,10 +31,28 @@ class Tedee extends utils.Adapter {
     this.userAgent = 'ioBroker v' + this.version;
     this.apiVersion = 'v1.0';
     this.json2iob = new Json2iob(this);
+
     this.requestClient = axios.create({
       withCredentials: true,
       headers: { 'user-agent': this.userAgent },
       timeout: 3 * 60 * 1000, //3min client timeout
+    });
+    axiosRetry(this.requestClient, {
+      retries: 3,
+      retryDelay: axiosRetry.exponentialDelay,
+      onRetry: (retryCount, err, cfg) => {
+        if (err.response) {
+          this.log.warn(`Retrying request to ${cfg.url} after ${err.response.status} ${err.response.statusText}`);
+        } else {
+          this.log.warn(`Retrying request to ${cfg.url} after ${err.code}`);
+        }
+      },
+      retryCondition: (error) => {
+        return (
+          error.code !== 'ECONNABORTED' &&
+          (!error.response || (error.response.status >= 405 && error.response.status <= 599))
+        );
+      },
     });
     this.updateInterval = null;
     this.session = {};
@@ -375,7 +394,7 @@ class Tedee extends utils.Adapter {
           method: 'POST',
           url: url,
           headers: {
-            acceot: '*/*',
+            accept: '*/*',
             api_token: this.hashedAPIKey(),
             mode: mode || '',
           },
@@ -387,6 +406,10 @@ class Tedee extends utils.Adapter {
             this.log.error(error);
             error.response && this.log.error(JSON.stringify(error.response.data));
           });
+        this.refreshTimeout && clearTimeout(this.refreshTimeout);
+        this.refreshTimeout = setTimeout(() => {
+          this.updateDevices();
+        }, 10 * 1000);
       } else {
         if (id.split('.')[3] === 'state') {
           const deviceId = id.split('.')[2];
@@ -402,10 +425,6 @@ class Tedee extends utils.Adapter {
           }
         }
       }
-      this.refreshTimeout && clearTimeout(this.refreshTimeout);
-      this.refreshTimeout = setTimeout(() => {
-        this.updateDevices();
-      }, 10 * 1000);
     }
   }
 }
