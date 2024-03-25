@@ -37,6 +37,9 @@ class Tedee extends utils.Adapter {
       headers: { 'user-agent': this.userAgent },
       timeout: 3 * 60 * 1000, //3min client timeout
     });
+    //retry on 405-599 and timeout
+    //calculate a new header for each retry
+
     axiosRetry(this.requestClient, {
       retries: 3,
       retryDelay: axiosRetry.exponentialDelay,
@@ -46,6 +49,7 @@ class Tedee extends utils.Adapter {
         } else {
           this.log.warn(`Retrying request to ${cfg.url} after ${err.code}`);
         }
+        cfg.headers.api_token = this.hashedAPIKey();
       },
       retryCondition: (error) => {
         return (
