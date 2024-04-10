@@ -2,8 +2,21 @@
   "common": {
     "tier": 2,
     "name": "tedee",
-    "version": "0.3.1",
+    "version": "0.3.2",
     "news": {
+      "0.3.2": {
+        "en": "add retry when request fails",
+        "de": "Retry hinzugefügt, wenn Anfrage fehlschlägt",
+        "ru": "добавить ответ, когда запрос не работает",
+        "pt": "adicionar retry quando o pedido falhar",
+        "nl": "opnieuw proberen toevoegen wanneer verzoek mislukt",
+        "fr": "ajouter réessayer lorsque la requête échoue",
+        "it": "aggiungere retry quando la richiesta fallisce",
+        "es": "añadir retry cuando la solicitud falla",
+        "pl": "dodaj ponowną próbę, gdy żądanie się nie powiedzie",
+        "uk": "додати птицю, коли запит не вдається",
+        "zh-cn": "请求失败时添加重试"
+      },
       "0.3.1": {
         "en": "initial release",
         "de": "Erstveröffentlichung",
