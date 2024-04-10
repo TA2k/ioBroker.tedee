@@ -66,7 +66,7 @@ Unlock modes:
     ### **WORK IN PROGRESS**
 -->
 
-### 0.3.0 (2023-12-16)
+### 0.3.1 (2023-12-16)
 
 - (TA2k) initial release
 
@@ -78,7 +78,7 @@ Tedee is a trademark of tedee. I am in no way endorsed by or affiliated with ted
 
 MIT License
 
-Copyright (c) 2023 TA2k <tombox2020@gmail.com>
+Copyright (c) 2024 TA2k <tombox2020@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
