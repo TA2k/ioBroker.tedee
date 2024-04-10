@@ -66,6 +66,10 @@ Unlock modes:
     ### **WORK IN PROGRESS**
 -->
 
+### **WORK IN PROGRESS**
+
+- add retry when request fails
+
 ### 0.3.1 (2023-12-16)
 
 - (TA2k) initial release
