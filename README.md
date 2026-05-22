@@ -65,6 +65,10 @@ Unlock modes:
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+
+### **WORK IN PROGRESS**
+- (ioBroker-Bot) Adapter requires js-controller >= 6.0.11 now.
+
 ### 0.3.2 (2024-04-10)
 
 - add retry when request fails
