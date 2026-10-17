@@ -29,6 +29,14 @@ All Lock devices by Tedee are supported.
 
 The Adapter receives all status update immediatly via webhooks. The interval in the settings is only a backup for continuously refreshs.
 
+### Webhooks / Callback host
+
+The adapter starts a small web server (port 29170 or the next free port) and registers it at the bridge. The bridge must be able to reach this port, e.g. allow it in the firewall if the bridge is in a separate (IoT) network.
+
+By default the first IPv4 address of the ioBroker system is used. Set **Callback host** in the instance settings if this is not the right one, e.g. with Docker, several network interfaces or to use IPv6.
+
+Only webhooks pointing to this ioBroker system are removed on start/stop, webhooks of other systems (e.g. Home Assistant) are kept.
+
 Current State of a lock:
 tedee.0.id.state
 
@@ -43,6 +51,7 @@ tedee.0.id.state
 - 8 Pulling
 - 9 Unknown
 - 18 Updating
+- 255 Unpulling
 
 ## Usage
 
