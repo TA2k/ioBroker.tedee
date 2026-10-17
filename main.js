@@ -264,7 +264,9 @@ class Tedee extends utils.Adapter {
           }
           if (device.type === 2 || device.type === 4) {
             await this.createLastActionObjects(id);
-            this.loadPinAliases(id).catch((e) => this.log.debug('PIN list: ' + e));
+            if (this.config.loadPinAliases !== false) {
+              this.loadPinAliases(id).catch((e) => this.log.debug('PIN list: ' + e));
+            }
           }
           for (const remote of remoteArray) {
             this.extendObject(id + '.remote.' + remote.command, {
@@ -497,7 +499,8 @@ class Tedee extends utils.Adapter {
     // user_id -1: keypad lock button without PIN, 0: operated at the lock itself
     const userId = data.user_id == null || Number(data.user_id) < 0 ? null : Number(data.user_id);
     let pinAlias = '';
-    if (userId != null && this.pinSources.includes(source)) {
+    // undefined for instances created before this option existed -> enabled
+    if (userId != null && this.pinSources.includes(source) && this.config.loadPinAliases !== false) {
       pinAlias = await this.getPinAlias(id, userId);
     }
     await this.setStateAsync(id + '.lastAction.source', source, true);

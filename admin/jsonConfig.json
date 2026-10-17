@@ -83,6 +83,29 @@
       "newLine": true,
       "sm": 12
     },
+
+    "loadPinAliases": {
+      "type": "checkbox",
+      "newLine": true,
+      "xs": 12,
+      "sm": 12,
+      "md": 12,
+      "lg": 12,
+      "xl": 12,
+      "label": {
+        "en": "Load PIN names from the lock (lastAction.pinAlias). Blocks the bridge ~1 s per 5 PINs while loading",
+        "de": "PIN-Namen vom Schloss laden (lastAction.pinAlias). Blockiert die Bridge beim Laden ca. 1 s pro 5 PINs",
+        "ru": "Load PIN names from the lock (lastAction.pinAlias). Blocks the bridge ~1 s per 5 PINs while loading",
+        "pt": "Load PIN names from the lock (lastAction.pinAlias). Blocks the bridge ~1 s per 5 PINs while loading",
+        "nl": "Load PIN names from the lock (lastAction.pinAlias). Blocks the bridge ~1 s per 5 PINs while loading",
+        "fr": "Load PIN names from the lock (lastAction.pinAlias). Blocks the bridge ~1 s per 5 PINs while loading",
+        "it": "Load PIN names from the lock (lastAction.pinAlias). Blocks the bridge ~1 s per 5 PINs while loading",
+        "es": "Load PIN names from the lock (lastAction.pinAlias). Blocks the bridge ~1 s per 5 PINs while loading",
+        "pl": "Load PIN names from the lock (lastAction.pinAlias). Blocks the bridge ~1 s per 5 PINs while loading",
+        "uk": "Load PIN names from the lock (lastAction.pinAlias). Blocks the bridge ~1 s per 5 PINs while loading",
+        "zh-cn": "Load PIN names from the lock (lastAction.pinAlias). Blocks the bridge ~1 s per 5 PINs while loading"
+      }
+    },
     "interval": {
       "type": "number",
       "newLine": true,

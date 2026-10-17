@@ -82,6 +82,8 @@ Each lock gets a channel `tedee.0.<lockId>.lastAction`, filled by the webhooks:
 
 The `source` values are not documented by Tedee and were determined with a Lock PRO and Keypad PRO. Unknown values are shown as `Unknown (n)`, please report them.
 
+The PIN names are read from the lock once at start and again when an unknown PIN id is used. While reading, the bridge is blocked (about 1 second per 5 PINs). Disable **Load PIN names from the lock** in the instance settings if you do not need `pinAlias`.
+
 ## Changelog
 
 <!--
