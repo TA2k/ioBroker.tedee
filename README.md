@@ -68,6 +68,20 @@ Unlock modes:
 - 3 - Without Pull. From close position: unlock only without auto pull. From open position: nothing.
 - 4 - Unlock or Pull. From close position: unlock only or unlock with auto pull if enabled. From open position: pull.
 
+## Last action (who opened the door)
+
+Each lock gets a channel `tedee.0.<lockId>.lastAction`, filled by the webhooks:
+
+| State        | Content                                                                     |
+| ------------ | --------------------------------------------------------------------------- |
+| `action`     | `unlock`, `lock` or `pull`. Written last, use it as trigger in scripts      |
+| `source`     | how: 2 = App / API, 10 = Keypad PIN, 23 = Fingerprint (other values raw)    |
+| `sourceName` | text of `source`                                                            |
+| `userId`     | Tedee user id (app), PIN id (keypad) or fingerprint id                      |
+| `pinAlias`   | name of the PIN for keypad actions (Bridge API 1.19+, loaded from the lock) |
+
+The `source` values are not documented by Tedee and were determined with a Lock PRO and Keypad PRO.
+
 ## Changelog
 
 <!--
@@ -83,6 +97,7 @@ Unlock modes:
 - (Schimi1983) Fix: polling waits for the previous request (bridge handles one request at a time)
 - (Schimi1983) Fix: added lock state 255 (Unpulling), state 3 (partially open) sets remote.lock to false
 - (Schimi1983) Webhook server listens on IPv4 and IPv6
+- (Schimi1983) New channel `lastAction` per lock: who/how the lock was operated (app, keypad PIN incl. PIN alias, fingerprint) [#13]
 
 ### 0.3.2 (2024-04-10)
 
