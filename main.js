@@ -72,10 +72,11 @@ class Tedee extends utils.Adapter {
      * @type {Record<number, string>}
      */
     this.actionSources = {
+      1: 'Button / manual',
       2: 'App / API',
       7: 'Auto pull spring',
-      10: 'Keypad PIN',
-      22: 'Keypad PIN (pull spring)',
+      10: 'Keypad',
+      22: 'Keypad (pull spring)',
       23: 'Fingerprint',
       24: 'Fingerprint (pull spring)',
     };
@@ -493,7 +494,8 @@ class Tedee extends utils.Adapter {
     }
     this.lastActionTime[id] = now;
     const source = Number(data.source);
-    const userId = data.user_id == null ? null : Number(data.user_id);
+    // user_id -1: keypad lock button without PIN, 0: operated at the lock itself
+    const userId = data.user_id == null || Number(data.user_id) < 0 ? null : Number(data.user_id);
     let pinAlias = '';
     if (userId != null && this.pinSources.includes(source)) {
       pinAlias = await this.getPinAlias(id, userId);

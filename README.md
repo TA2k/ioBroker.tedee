@@ -75,12 +75,12 @@ Each lock gets a channel `tedee.0.<lockId>.lastAction`, filled by the webhooks:
 | State        | Content                                                                     |
 | ------------ | --------------------------------------------------------------------------- |
 | `action`     | `unlock`, `lock` or `pull`. Written last, use it as trigger in scripts      |
-| `source`     | how: 2 = App / API, 10 = Keypad PIN, 23 = Fingerprint (other values raw)    |
+| `source`     | how: 1 = Button / manual, 2 = App / API, 10 = Keypad, 23 = Fingerprint      |
 | `sourceName` | text of `source`                                                            |
-| `userId`     | Tedee user id (app), PIN id (keypad) or fingerprint id                      |
+| `userId`     | Tedee user id (app), PIN id (keypad) or fingerprint id; empty if unknown    |
 | `pinAlias`   | name of the PIN for keypad actions (Bridge API 1.19+, loaded from the lock) |
 
-The `source` values are not documented by Tedee and were determined with a Lock PRO and Keypad PRO.
+The `source` values are not documented by Tedee and were determined with a Lock PRO and Keypad PRO. Unknown values are shown as `Unknown (n)`, please report them.
 
 ## Changelog
 
