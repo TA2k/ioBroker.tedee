@@ -100,6 +100,9 @@ The PIN names are read from the lock once at start and again when an unknown PIN
 - (Schimi1983) Fix: added lock state 255 (Unpulling), state 3 (partially open) sets remote.lock to false
 - (Schimi1983) Webhook server listens on IPv4 and IPv6
 - (Schimi1983) New channel `lastAction` per lock: who/how the lock was operated (app, keypad PIN incl. PIN alias, fingerprint) [#13]
+- (Schimi1983) Node.js >= 22, js-controller >= 6.0.11 and admin >= 7.6.17 required
+- (Schimi1983) Dependencies updated, tests for Node.js 22, 24 and 26
+- (Schimi1983) Admin UI: responsive layout
 
 ### 0.3.2 (2024-04-10)
 
