@@ -65,6 +65,16 @@ Unlock modes:
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+
+- (Schimi1983) Fix: webhook URL now uses an IP address instead of the ioBroker host name (new optional setting "Callback host")
+- (Schimi1983) Fix: only own webhooks are removed from the bridge, webhooks of other integrations (e.g. Home Assistant) are kept
+- (Schimi1983) Fix: lock/unlock/pull commands are no longer repeated automatically on 405/406 or connection errors
+- (Schimi1983) Fix: "mode" header is only sent for unlock and validated (0, 2, 3, 4)
+- (Schimi1983) Fix: polling waits for the previous request (bridge handles one request at a time)
+- (Schimi1983) Fix: added lock state 255 (Unpulling), state 3 (partially open) sets remote.lock to false
+- (Schimi1983) Webhook server listens on IPv4 and IPv6
+
 ### 0.3.2 (2024-04-10)
 
 - add retry when request fails

@@ -99,7 +99,8 @@
   "native": {
     "bridgeip": "",
     "token": "",
-    "interval": 60
+    "interval": 60,
+    "callbackHost": ""
   },
   "objects": [],
   "instanceObjects": [

@@ -10,6 +10,7 @@ const utils = require('@iobroker/adapter-core');
 const axios = require('axios').default;
 const Json2iob = require('json2iob');
 const crypto = require('crypto');
+const os = require('os');
 const express = require('express');
 const bodyParser = require('body-parser');
 const axiosRetry = require('axios-retry').default;
@@ -39,6 +40,9 @@ class Tedee extends utils.Adapter {
     });
     //retry on 405-599 and timeout
     //calculate a new header for each retry
+    // @KI_HINWEIS: Lock commands (lock/unlock/pull) disable retries per request via
+    // the 'axios-retry' request option. A 405/406 or a socket reset after a command
+    // does not prove the motor did not move, so repeating it could unlock a door twice.
 
     axiosRetry(this.requestClient, {
       retries: 3,
@@ -58,7 +62,8 @@ class Tedee extends utils.Adapter {
         );
       },
     });
-    this.updateInterval = null;
+    this.updateTimeout = null;
+    this.isUnloading = false;
     this.session = {};
     this.states = {
       state: {
@@ -73,6 +78,7 @@ class Tedee extends utils.Adapter {
         8: 'Pulling',
         9: 'Unknown',
         18: 'Updating',
+        255: 'Unpulling',
       },
       type: {
         1: 'Bridge',
@@ -107,9 +113,56 @@ class Tedee extends utils.Adapter {
     await this.getDeviceList();
     await this.sleep(1500);
     await this.startWebhooks();
-    this.updateInterval = setInterval(() => {
-      this.updateDevices();
+    this.scheduleUpdate();
+  }
+
+  /**
+   * Schedules the next backup poll of all locks.
+   * @KI_HINWEIS: setTimeout chain instead of setInterval. The bridge handles only one
+   * local API request at a time, so a new poll must not start before the previous
+   * one (incl. retries, up to 3 min timeout) has finished.
+   * @returns {void}
+   */
+  scheduleUpdate() {
+    if (this.isUnloading) {
+      return;
+    }
+    this.updateTimeout && clearTimeout(this.updateTimeout);
+    this.updateTimeout = setTimeout(async () => {
+      this.updateTimeout = null;
+      await this.updateDevices();
+      this.scheduleUpdate();
     }, this.config.interval * 1000);
+  }
+
+  /**
+   * Determines the address the bridge uses to reach the webhook server.
+   * Order: instance setting "callbackHost" -> first non-internal IPv4 of this system.
+   * IPv6 addresses are wrapped in brackets so they can be used inside a URL.
+   * @KI_HINWEIS: this.host is the ioBroker host *name* (e.g. "iobroker"), which the
+   * bridge usually cannot resolve. Webhooks were registered but never delivered.
+   * @returns {string | null} host part for the callback URL or null if none was found
+   */
+  getCallbackHost() {
+    const configured = (this.config.callbackHost || '').toString().trim();
+    if (configured) {
+      if (configured.includes(':') && !configured.startsWith('[')) {
+        return `[${configured}]`;
+      }
+      return configured;
+    }
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+      for (const addr of interfaces[name] || []) {
+        // Node 18.0-18.3 reports family as number 4, later versions as 'IPv4'
+        const family = String(addr.family);
+        const isV4 = family === 'IPv4' || family === '4';
+        if (isV4 && !addr.internal) {
+          return addr.address;
+        }
+      }
+    }
+    return null;
   }
   async getDeviceList() {
     this.log.info(`Getting devices from bridge ${this.config.bridgeip}`);
@@ -208,19 +261,26 @@ class Tedee extends utils.Adapter {
         error.response && this.log.error(JSON.stringify(error.response.data));
       });
   }
+  /**
+   * Starts the local webhook server and registers it at the bridge.
+   * @returns {Promise<void>}
+   */
   async startWebhooks() {
     const app = express();
     const port = await this.getPortAsync(29170);
-    const listenHost = '0.0.0.0';
-    const host = await this.host;
+    const host = this.getCallbackHost();
     if (!host) {
-      this.log.error('No host found cannot start webhooks');
+      this.log.error(
+        'No callback address found, cannot start webhooks. Please set "Callback host" in the instance settings',
+      );
       return;
     }
+    this.callbackHost = host;
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: true }));
-    app.listen(port, () => {
-      this.log.info(`Webhooks listening at http://${listenHost}:${port}`);
+    // @KI_HINWEIS: no listen host -> Node binds to "::" (dual stack), so IPv4 and IPv6 callbacks both arrive.
+    this.webhookServer = app.listen(port, () => {
+      this.log.info(`Webhooks listening on port ${port} (IPv4 + IPv6)`);
     });
     app.post('/webhook', async (req, res) => {
       this.log.debug(JSON.stringify(req.body));
@@ -250,7 +310,7 @@ class Tedee extends utils.Adapter {
       headers: {
         accept: '*/*',
         api_token: this.hashedAPIKey(),
-        content_type: 'application/json',
+        'Content-Type': 'application/json',
       },
       data: {
         url: 'http://' + host + ':' + port + '/webhook',
@@ -268,13 +328,38 @@ class Tedee extends utils.Adapter {
       });
   }
 
+  /**
+   * Checks whether a registered bridge callback belongs to this adapter.
+   * Matches callbacks pointing to "/webhook" on our callback host (any port, so
+   * stale registrations from a previous port are removed as well).
+   * @param {string} url callback URL as returned by GET /callback
+   * @returns {boolean}
+   */
+  isOwnWebhook(url) {
+    if (!url || !this.callbackHost) {
+      return false;
+    }
+    try {
+      const parsed = new URL(url);
+      return parsed.hostname === this.callbackHost && parsed.pathname === '/webhook';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /**
+   * Removes webhooks registered by this adapter from the bridge.
+   * @KI_HINWEIS: previously every callback on the bridge was deleted, which also
+   * removed webhooks of other integrations (e.g. Home Assistant) on each adapter start/stop.
+   * @returns {Promise<void>}
+   */
   async cleanWebhooks() {
     if (!this.config.bridgeip || !this.config.token) {
       return;
     }
 
     await this.requestClient({
-      methode: 'get',
+      method: 'get',
       url: 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/callback',
       headers: {
         accept: '*/*',
@@ -283,7 +368,12 @@ class Tedee extends utils.Adapter {
     })
       .then(async (res) => {
         this.log.debug(JSON.stringify(res.data));
-        for (const webhook of res.data) {
+        const webhooks = Array.isArray(res.data) ? res.data : [];
+        for (const webhook of webhooks) {
+          if (!this.isOwnWebhook(webhook.url)) {
+            this.log.debug('Keeping foreign webhook ' + webhook.id + ' ' + webhook.url);
+            continue;
+          }
           this.log.info('Deleting webhook ' + webhook.id + ' ' + webhook.url);
           await this.sleep(500);
           await this.requestClient({
@@ -355,12 +445,14 @@ class Tedee extends utils.Adapter {
    */
   async onUnload(callback) {
     try {
+      this.isUnloading = true;
+      this.refreshTimeout && clearTimeout(this.refreshTimeout);
+      this.updateTimeout && clearTimeout(this.updateTimeout);
       //wait to prevent busy bridge
       await this.sleep(500);
       await this.cleanWebhooks();
+      this.webhookServer && this.webhookServer.close();
       this.setState('info.connection', false, true);
-      this.refreshTimeout && clearTimeout(this.refreshTimeout);
-      this.updateInterval && clearInterval(this.updateInterval);
       callback();
     } catch (e) {
       callback();
@@ -385,23 +477,36 @@ class Tedee extends utils.Adapter {
           this.updateDevices();
           return;
         }
+        if (!['lock', 'unlock', 'pull'].includes(command)) {
+          return;
+        }
         if (state.val === false && command === 'lock') {
           command = 'unlock';
         }
-        let mode;
+        /** @type {Record<string, string>} */
+        const headers = {
+          accept: '*/*',
+          api_token: this.hashedAPIKey(),
+        };
+        // The "mode" header is only defined for /unlock (0, 2, 3, 4). Other values are rejected with 403.
         if (command === 'unlock') {
-          mode = state.val || 0;
+          const mode = typeof state.val === 'number' ? state.val : 0;
+          if (![0, 2, 3, 4].includes(mode)) {
+            this.log.warn(`Invalid unlock mode ${mode}. Allowed: 0, 2, 3, 4`);
+            return;
+          }
+          if (mode !== 0) {
+            headers.mode = mode.toString();
+          }
         }
         const url = 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/lock/' + deviceId + '/' + command;
         this.log.debug('Sending url: ' + url);
         await this.requestClient({
           method: 'POST',
           url: url,
-          headers: {
-            accept: '*/*',
-            api_token: this.hashedAPIKey(),
-            mode: mode || '',
-          },
+          headers: headers,
+          // never repeat a lock command automatically, see constructor
+          'axios-retry': { retries: 0 },
         })
           .then(async (res) => {
             this.log.info(JSON.stringify(res.data));
@@ -417,7 +522,7 @@ class Tedee extends utils.Adapter {
       } else {
         if (id.split('.')[3] === 'state') {
           const deviceId = id.split('.')[2];
-          if (state.val === 2 || state.val === 7 || state.val === 18) {
+          if (state.val === 2 || state.val === 3 || state.val === 7 || state.val === 18) {
             this.setState(deviceId + '.remote.lock', false, true);
           }
           if (state.val === 7) {
