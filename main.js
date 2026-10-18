@@ -9,15 +9,16 @@
 const utils = require('@iobroker/adapter-core');
 const axios = require('axios').default;
 const Json2iob = require('json2iob');
-const crypto = require('crypto');
-const os = require('os');
+const crypto = require('node:crypto');
+const os = require('node:os');
+const { setTimeout: wait } = require('node:timers/promises');
 const express = require('express');
 const bodyParser = require('body-parser');
 const axiosRetry = require('axios-retry').default;
 
 class Tedee extends utils.Adapter {
   /**
-   * @param {Partial<utils.AdapterOptions>} [options={}]
+   * @param {Partial<utils.AdapterOptions>} [options] adapter options
    */
   constructor(options) {
     super({
@@ -29,7 +30,7 @@ class Tedee extends utils.Adapter {
     this.on('stateChange', this.onStateChange.bind(this));
     this.on('unload', this.onUnload.bind(this));
     this.deviceArray = [];
-    this.userAgent = 'ioBroker v' + this.version;
+    this.userAgent = `ioBroker v${this.version}`;
     this.apiVersion = 'v1.0';
     this.json2iob = new Json2iob(this);
 
@@ -69,8 +70,10 @@ class Tedee extends utils.Adapter {
     this.session = {};
     /**
      * Webhook "source" values of lock-status-changed events.
-     * @KI_HINWEIS: not documented in the Bridge API. Values determined with a Lock PRO,
+     *
+     * Note: not documented in the Bridge API. Values determined with a Lock PRO,
      * Keypad PRO and Bridge FW 2.2.48155. Unknown values are kept as raw number.
+     *
      * @type {Record<number, string>}
      */
     this.actionSources = {
@@ -86,6 +89,7 @@ class Tedee extends utils.Adapter {
     this.pinSources = [10, 22];
     /**
      * PIN alias cache per lock.
+     *
      * @type {Record<string, {listVersion: number, aliases: Record<number, string>, supported: boolean, loading: Promise<void> | null}>}
      */
     this.pinCache = {};
@@ -144,17 +148,19 @@ class Tedee extends utils.Adapter {
 
   /**
    * Schedules the next backup poll of all locks.
-   * @KI_HINWEIS: setTimeout chain instead of setInterval. The bridge handles only one
+   *
+   * Note: setTimeout chain instead of setInterval. The bridge handles only one
    * local API request at a time, so a new poll must not start before the previous
    * one (incl. retries, up to 3 min timeout) has finished.
+   *
    * @returns {void}
    */
   scheduleUpdate() {
     if (this.isUnloading) {
       return;
     }
-    this.updateTimeout && clearTimeout(this.updateTimeout);
-    this.updateTimeout = setTimeout(async () => {
+    this.updateTimeout && this.clearTimeout(this.updateTimeout);
+    this.updateTimeout = this.setTimeout(async () => {
       this.updateTimeout = null;
       await this.updateDevices();
       this.scheduleUpdate();
@@ -165,8 +171,10 @@ class Tedee extends utils.Adapter {
    * Determines the address the bridge uses to reach the webhook server.
    * Order: instance setting "callbackHost" -> first non-internal IPv4 of this system.
    * IPv6 addresses are wrapped in brackets so they can be used inside a URL.
-   * @KI_HINWEIS: this.host is the ioBroker host *name* (e.g. "iobroker"), which the
+   *
+   * Note: this.host is the ioBroker host *name* (e.g. "iobroker"), which the
    * bridge usually cannot resolve. Webhooks were registered but never delivered.
+   *
    * @returns {string | null} host part for the callback URL or null if none was found
    */
   getCallbackHost() {
@@ -194,7 +202,7 @@ class Tedee extends utils.Adapter {
     this.log.info(`Getting devices from bridge ${this.config.bridgeip}`);
     await this.requestClient({
       method: 'get',
-      url: 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/bridge',
+      url: `http://${this.config.bridgeip}/${this.apiVersion}/bridge`,
       headers: {
         accept: '*/*',
         api_token: this.hashedAPIKey(),
@@ -218,7 +226,7 @@ class Tedee extends utils.Adapter {
       });
     await this.requestClient({
       method: 'get',
-      url: 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/lock',
+      url: `http://${this.config.bridgeip}/${this.apiVersion}/lock`,
       headers: {
         accept: '*/*',
         api_token: this.hashedAPIKey(),
@@ -241,7 +249,7 @@ class Tedee extends utils.Adapter {
             },
             native: { type: device.type },
           });
-          await this.setObjectNotExistsAsync(id + '.remote', {
+          await this.setObjectNotExistsAsync(`${id}.remote`, {
             type: 'channel',
             common: {
               name: 'Remote Controls',
@@ -267,11 +275,11 @@ class Tedee extends utils.Adapter {
           if (device.type === 2 || device.type === 4) {
             await this.createLastActionObjects(id);
             if (this.config.loadPinAliases !== false) {
-              this.loadPinAliases(id).catch((e) => this.log.debug('PIN list: ' + e));
+              this.loadPinAliases(id).catch((e) => this.log.debug(`PIN list: ${e}`));
             }
           }
           for (const remote of remoteArray) {
-            this.extendObject(id + '.remote.' + remote.command, {
+            this.extendObject(`${id}.remote.${remote.command}`, {
               type: 'state',
               common: {
                 name: remote.name || '',
@@ -295,6 +303,7 @@ class Tedee extends utils.Adapter {
   }
   /**
    * Starts the local webhook server and registers it at the bridge.
+   *
    * @returns {Promise<void>}
    */
   async startWebhooks() {
@@ -329,7 +338,7 @@ class Tedee extends utils.Adapter {
           deviceId = deviceId.toString().replace(this.FORBIDDEN_CHARS, '_');
           this.json2iob.parse(deviceId, req.body.data, { forceIndex: true, states: this.states });
           if (req.body.event === 'lock-status-changed') {
-            this.handleLastAction(deviceId, req.body.data).catch((e) => this.log.warn('lastAction: ' + e));
+            this.handleLastAction(deviceId, req.body.data).catch((e) => this.log.warn(`lastAction: ${e}`));
           }
         } else {
           this.json2iob.parse('bridge', req.body.data, { forceIndex: true });
@@ -340,17 +349,17 @@ class Tedee extends utils.Adapter {
     await this.cleanWebhooks();
     await this.sleep(1500);
     //register webhook
-    this.log.info('Registering webhook ' + 'http://' + host + ':' + port + '/webhook');
+    this.log.info(`Registering webhook ` + `http://${host}:${port}/webhook`);
     await this.requestClient({
       method: 'post',
-      url: 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/callback',
+      url: `http://${this.config.bridgeip}/${this.apiVersion}/callback`,
       headers: {
         accept: '*/*',
         api_token: this.hashedAPIKey(),
         'Content-Type': 'application/json',
       },
       data: {
-        url: 'http://' + host + ':' + port + '/webhook',
+        url: `http://${host}:${port}/webhook`,
         headers: [],
       },
     })
@@ -369,8 +378,9 @@ class Tedee extends utils.Adapter {
    * Checks whether a registered bridge callback belongs to this adapter.
    * Matches callbacks pointing to "/webhook" on our callback host (any port, so
    * stale registrations from a previous port are removed as well).
+   *
    * @param {string} url callback URL as returned by GET /callback
-   * @returns {boolean}
+   * @returns {boolean} true if the callback was registered by this adapter
    */
   isOwnWebhook(url) {
     if (!url || !this.callbackHost) {
@@ -379,15 +389,17 @@ class Tedee extends utils.Adapter {
     try {
       const parsed = new URL(url);
       return parsed.hostname === this.callbackHost && parsed.pathname === '/webhook';
-    } catch (e) {
+    } catch {
       return false;
     }
   }
 
   /**
    * Removes webhooks registered by this adapter from the bridge.
-   * @KI_HINWEIS: previously every callback on the bridge was deleted, which also
+   *
+   * Note: previously every callback on the bridge was deleted, which also
    * removed webhooks of other integrations (e.g. Home Assistant) on each adapter start/stop.
+   *
    * @returns {Promise<void>}
    */
   async cleanWebhooks() {
@@ -397,7 +409,7 @@ class Tedee extends utils.Adapter {
 
     await this.requestClient({
       method: 'get',
-      url: 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/callback',
+      url: `http://${this.config.bridgeip}/${this.apiVersion}/callback`,
       headers: {
         accept: '*/*',
         api_token: this.hashedAPIKey(),
@@ -408,14 +420,14 @@ class Tedee extends utils.Adapter {
         const webhooks = Array.isArray(res.data) ? res.data : [];
         for (const webhook of webhooks) {
           if (!this.isOwnWebhook(webhook.url)) {
-            this.log.debug('Keeping foreign webhook ' + webhook.id + ' ' + webhook.url);
+            this.log.debug(`Keeping foreign webhook ${webhook.id} ${webhook.url}`);
             continue;
           }
-          this.log.info('Deleting webhook ' + webhook.id + ' ' + webhook.url);
+          this.log.info(`Deleting webhook ${webhook.id} ${webhook.url}`);
           await this.sleep(500);
           await this.requestClient({
             method: 'delete',
-            url: 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/callback/' + webhook.id,
+            url: `http://${this.config.bridgeip}/${this.apiVersion}/callback/${webhook.id}`,
             headers: {
               accept: '*/*',
               api_token: this.hashedAPIKey(),
@@ -438,11 +450,12 @@ class Tedee extends utils.Adapter {
   }
   /**
    * Creates the lastAction channel of a lock.
+   *
    * @param {string} id device id
    * @returns {Promise<void>}
    */
   async createLastActionObjects(id) {
-    await this.extendObjectAsync(id + '.lastAction', {
+    await this.extendObjectAsync(`${id}.lastAction`, {
       type: 'channel',
       common: { name: 'Last action (who / how the lock was operated)' },
       native: {},
@@ -456,7 +469,7 @@ class Tedee extends utils.Adapter {
       { id: 'pinAlias', name: 'PIN alias (keypad only)', type: 'string', role: 'text' },
     ];
     for (const state of lastActionStates) {
-      await this.extendObjectAsync(id + '.lastAction.' + state.id, {
+      await this.extendObjectAsync(`${id}.lastAction.${state.id}`, {
         type: 'state',
         common: {
           name: state.name,
@@ -475,6 +488,7 @@ class Tedee extends utils.Adapter {
    * Updates lastAction.* from a lock-status-changed webhook.
    * Only the first event of an operation is used (4 = opening, 5 = closing, 8 = pulling
    * without a preceding unlock), so the following pull events do not overwrite the source.
+   *
    * @param {string} id device id
    * @param {{state?: number, source?: number, user_id?: number}} data webhook data
    * @returns {Promise<void>}
@@ -505,28 +519,25 @@ class Tedee extends utils.Adapter {
     if (userId != null && this.pinSources.includes(source) && this.config.loadPinAliases !== false) {
       pinAlias = await this.getPinAlias(id, userId);
     }
-    await this.setStateAsync(id + '.lastAction.source', source, true);
-    await this.setStateAsync(
-      id + '.lastAction.sourceName',
-      this.actionSources[source] || 'Unknown (' + source + ')',
-      true,
-    );
-    await this.setStateAsync(id + '.lastAction.userId', userId, true);
-    await this.setStateAsync(id + '.lastAction.pinAlias', pinAlias, true);
+    await this.setStateAsync(`${id}.lastAction.source`, source, true);
+    await this.setStateAsync(`${id}.lastAction.sourceName`, this.actionSources[source] || `Unknown (${source})`, true);
+    await this.setStateAsync(`${id}.lastAction.userId`, userId, true);
+    await this.setStateAsync(`${id}.lastAction.pinAlias`, pinAlias, true);
     // written last, so scripts can trigger on lastAction.action and read the other states
-    await this.setStateAsync(id + '.lastAction.action', action, true);
+    await this.setStateAsync(`${id}.lastAction.action`, action, true);
   }
 
   /**
    * Returns the alias of a PIN, reloads the PIN list once if the id is unknown.
+   *
    * @param {string} id device id
    * @param {number} pinId PIN id (user_id of the webhook)
-   * @returns {Promise<string>}
+   * @returns {Promise<string>} alias of the PIN or empty string if unknown
    */
   async getPinAlias(id, pinId) {
     let cache = this.pinCache[id];
     if (!cache || cache.aliases[pinId] == null) {
-      await this.loadPinAliases(id).catch((e) => this.log.debug('PIN list: ' + e));
+      await this.loadPinAliases(id).catch((e) => this.log.debug(`PIN list: ${e}`));
       cache = this.pinCache[id];
     }
     return (cache && cache.aliases[pinId]) || '';
@@ -535,8 +546,10 @@ class Tedee extends utils.Adapter {
   /**
    * Loads id/alias of all PINs of a lock (GET /lock/{id}/pin, Bridge API >= 1.19).
    * Uses listVersion, so an unchanged list is answered with 304 without body.
-   * @KI_HINWEIS: the bridge reads the list via BLE (~5 PINs per second) and is blocked
+   *
+   * Note: the bridge reads the list via BLE (~5 PINs per second) and is blocked
    * meanwhile. Therefore only loaded on start and when an unknown PIN id shows up.
+   *
    * @param {string} id device id
    * @returns {Promise<void>}
    */
@@ -554,7 +567,7 @@ class Tedee extends utils.Adapter {
     }
     cache.loading = this.requestClient({
       method: 'get',
-      url: 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/lock/' + id + '/pin',
+      url: `http://${this.config.bridgeip}/${this.apiVersion}/lock/${id}/pin`,
       params: cache.listVersion ? { listVersion: cache.listVersion } : undefined,
       headers: { accept: '*/*', api_token: this.hashedAPIKey() },
       timeout: 2 * 60 * 1000,
@@ -584,7 +597,7 @@ class Tedee extends utils.Adapter {
           this.log.info('Bridge does not support the PIN API, lastAction.pinAlias stays empty');
           return;
         }
-        this.log.debug('Could not load PIN list: ' + error);
+        this.log.debug(`Could not load PIN list: ${error}`);
       })
       .finally(() => {
         cache.loading = null;
@@ -593,7 +606,8 @@ class Tedee extends utils.Adapter {
   }
 
   async sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    // timers/promises instead of this.delay(): must also work while the adapter is unloading
+    await wait(ms);
   }
   hashedAPIKey() {
     //api_key = SHA256(token + timestamp) + timestamp
@@ -608,7 +622,7 @@ class Tedee extends utils.Adapter {
   async updateDevices() {
     await this.requestClient({
       method: 'get',
-      url: 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/lock',
+      url: `http://${this.config.bridgeip}/${this.apiVersion}/lock`,
       headers: {
         'Content-Type': 'application/json',
         api_token: this.hashedAPIKey(),
@@ -634,28 +648,30 @@ class Tedee extends utils.Adapter {
 
   /**
    * Is called when adapter shuts down - callback has to be called under any circumstances!
-   * @param {() => void} callback
+   *
+   * @param {() => void} callback callback of js-controller, must be called in any case
    */
   async onUnload(callback) {
     try {
       this.isUnloading = true;
-      this.refreshTimeout && clearTimeout(this.refreshTimeout);
-      this.updateTimeout && clearTimeout(this.updateTimeout);
+      this.refreshTimeout && this.clearTimeout(this.refreshTimeout);
+      this.updateTimeout && this.clearTimeout(this.updateTimeout);
       //wait to prevent busy bridge
       await this.sleep(500);
       await this.cleanWebhooks();
       this.webhookServer && this.webhookServer.close();
       this.setState('info.connection', false, true);
       callback();
-    } catch (e) {
+    } catch {
       callback();
     }
   }
 
   /**
    * Is called if a subscribed state changes
-   * @param {string} id
-   * @param {ioBroker.State | null | undefined} state
+   *
+   * @param {string} id id of the changed state
+   * @param {ioBroker.State | null | undefined} state new state, null if deleted
    */
   async onStateChange(id, state) {
     if (state) {
@@ -692,8 +708,8 @@ class Tedee extends utils.Adapter {
             headers.mode = mode.toString();
           }
         }
-        const url = 'http://' + this.config.bridgeip + '/' + this.apiVersion + '/lock/' + deviceId + '/' + command;
-        this.log.debug('Sending url: ' + url);
+        const url = `http://${this.config.bridgeip}/${this.apiVersion}/lock/${deviceId}/${command}`;
+        this.log.debug(`Sending url: ${url}`);
         await this.requestClient({
           method: 'POST',
           url: url,
@@ -708,22 +724,22 @@ class Tedee extends utils.Adapter {
             this.log.error(error);
             error.response && this.log.error(JSON.stringify(error.response.data));
           });
-        this.refreshTimeout && clearTimeout(this.refreshTimeout);
-        this.refreshTimeout = setTimeout(() => {
+        this.refreshTimeout && this.clearTimeout(this.refreshTimeout);
+        this.refreshTimeout = this.setTimeout(() => {
           this.updateDevices();
         }, 10 * 1000);
       } else {
         if (id.split('.')[3] === 'state') {
           const deviceId = id.split('.')[2];
           if (state.val === 2 || state.val === 3 || state.val === 7 || state.val === 18) {
-            this.setState(deviceId + '.remote.lock', false, true);
+            this.setState(`${deviceId}.remote.lock`, false, true);
           }
           if (state.val === 7) {
-            this.setState(deviceId + '.remote.pull', true, true);
+            this.setState(`${deviceId}.remote.pull`, true, true);
           }
           if (state.val === 6) {
-            this.setState(deviceId + '.remote.lock', true, true);
-            this.setState(deviceId + '.remote.pull', false, true);
+            this.setState(`${deviceId}.remote.lock`, true, true);
+            this.setState(`${deviceId}.remote.pull`, false, true);
           }
         }
       }
@@ -734,7 +750,7 @@ class Tedee extends utils.Adapter {
 if (require.main !== module) {
   // Export the constructor in compact mode
   /**
-   * @param {Partial<utils.AdapterOptions>} [options={}]
+   * @param {Partial<utils.AdapterOptions>} [options] adapter options
    */
   module.exports = (options) => new Tedee(options);
 } else {
