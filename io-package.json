@@ -100,7 +100,8 @@
     "bridgeip": "",
     "token": "",
     "interval": 60,
-    "callbackHost": ""
+    "callbackHost": "",
+    "loadPinAliases": true
   },
   "objects": [],
   "instanceObjects": [
