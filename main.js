@@ -53,7 +53,9 @@ class Tedee extends utils.Adapter {
         } else {
           this.log.warn(`Retrying request to ${cfg.url} after ${err.code}`);
         }
-        cfg.headers.api_token = this.hashedAPIKey();
+        if (cfg.headers) {
+          cfg.headers.api_token = this.hashedAPIKey();
+        }
       },
       retryCondition: (error) => {
         return (

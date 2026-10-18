@@ -18,14 +18,22 @@
         "zh-cn": "Bridge Ip"
       },
       "newLine": true,
-      "sm": 3
+      "xs": 12,
+      "sm": 12,
+      "md": 6,
+      "lg": 4,
+      "xl": 4
     },
     "token": {
       "type": "password",
       "newLine": true,
       "repeat": false,
       "visible": true,
-      "sm": 3,
+      "xs": 12,
+      "sm": 12,
+      "md": 6,
+      "lg": 4,
+      "xl": 4,
       "label": {
         "en": "Bridge Token",
         "de": "Bridge Token",
@@ -56,7 +64,11 @@
         "zh-cn": "开放的受让人。 附录 用户概况的试验。 某些桥梁——配给—— —— SP- —— —— —— —— —— —— —— —— 然后将转换成顿。."
       },
       "newLine": true,
-      "sm": 12
+      "xs": 12,
+      "sm": 12,
+      "md": 12,
+      "lg": 12,
+      "xl": 12
     },
     "_docLink": {
       "type": "staticLink",
@@ -75,13 +87,21 @@
       },
       "href": "https://docs.tedee.com/bridge-api#tag/Getting-started",
       "newLine": true,
-      "sm": 12
+      "xs": 12,
+      "sm": 12,
+      "md": 12,
+      "lg": 12,
+      "xl": 12
     },
     "_image": {
       "type": "staticImage",
       "src": "https://raw.githubusercontent.com/TA2k/ioBroker.tedee/main/admin/tedee_api.png",
       "newLine": true,
-      "sm": 12
+      "xs": 12,
+      "sm": 12,
+      "md": 12,
+      "lg": 12,
+      "xl": 12
     },
 
     "loadPinAliases": {
@@ -110,7 +130,11 @@
       "type": "number",
       "newLine": true,
       "min": 1,
-      "sm": 2,
+      "xs": 12,
+      "sm": 12,
+      "md": 6,
+      "lg": 4,
+      "xl": 4,
       "label": {
         "en": "Update interval (in seconds). Only backup if webhooks are not working",
         "de": "Update-Intervall (in Sekunden). Nur Backup, falls Webhooks nicht funktionieren",
