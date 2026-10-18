@@ -29,6 +29,14 @@ All Lock devices by Tedee are supported.
 
 The Adapter receives all status update immediatly via webhooks. The interval in the settings is only a backup for continuously refreshs.
 
+### Webhooks / Callback host
+
+The adapter starts a small web server (port 29170 or the next free port) and registers it at the bridge. The bridge must be able to reach this port, e.g. allow it in the firewall if the bridge is in a separate (IoT) network.
+
+By default the first IPv4 address of the ioBroker system is used. Set **Callback host** in the instance settings if this is not the right one, e.g. with Docker, several network interfaces or to use IPv6.
+
+Only webhooks pointing to this ioBroker system are removed on start/stop, webhooks of other systems (e.g. Home Assistant) are kept.
+
 Current State of a lock:
 tedee.0.id.state
 
@@ -43,6 +51,7 @@ tedee.0.id.state
 - 8 Pulling
 - 9 Unknown
 - 18 Updating
+- 255 Unpulling
 
 ## Usage
 
@@ -65,6 +74,16 @@ Unlock modes:
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+
+- (Schimi1983) Fix: webhook URL now uses an IP address instead of the ioBroker host name (new optional setting "Callback host")
+- (Schimi1983) Fix: only own webhooks are removed from the bridge, webhooks of other integrations (e.g. Home Assistant) are kept
+- (Schimi1983) Fix: lock/unlock/pull commands are no longer repeated automatically on 405/406 or connection errors
+- (Schimi1983) Fix: "mode" header is only sent for unlock and validated (0, 2, 3, 4)
+- (Schimi1983) Fix: polling waits for the previous request (bridge handles one request at a time)
+- (Schimi1983) Fix: added lock state 255 (Unpulling), state 3 (partially open) sets remote.lock to false
+- (Schimi1983) Webhook server listens on IPv4 and IPv6
+
 ### 0.3.2 (2024-04-10)
 
 - add retry when request fails

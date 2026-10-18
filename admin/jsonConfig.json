@@ -83,7 +83,6 @@
       "newLine": true,
       "sm": 12
     },
-
     "interval": {
       "type": "number",
       "newLine": true,
@@ -101,6 +100,28 @@
         "pl": "Update interval (ang.). Tylko w przypadku, gdy węzły nie pracują",
         "uk": "Період оновлення (в секундах). Тільки резервні копії, якщо webhooks не працює",
         "zh-cn": "最新间隔(第二期)。 只有当网站没有工作时,才得到支持。"
+      }
+    },
+    "callbackHost": {
+      "type": "text",
+      "newLine": true,
+      "xs": 12,
+      "sm": 12,
+      "md": 6,
+      "lg": 4,
+      "xl": 4,
+      "label": {
+        "en": "Callback host (optional). IP of this ioBroker system reachable by the bridge. Empty = auto-detect (first IPv4)",
+        "de": "Callback-Host (optional). IP dieses ioBroker-Systems, die die Bridge erreicht. Leer = automatisch (erste IPv4)",
+        "ru": "Callback host (optional). IP of this ioBroker system reachable by the bridge. Empty = auto-detect (first IPv4)",
+        "pt": "Callback host (optional). IP of this ioBroker system reachable by the bridge. Empty = auto-detect (first IPv4)",
+        "nl": "Callback host (optional). IP of this ioBroker system reachable by the bridge. Empty = auto-detect (first IPv4)",
+        "fr": "Callback host (optional). IP of this ioBroker system reachable by the bridge. Empty = auto-detect (first IPv4)",
+        "it": "Callback host (optional). IP of this ioBroker system reachable by the bridge. Empty = auto-detect (first IPv4)",
+        "es": "Callback host (optional). IP of this ioBroker system reachable by the bridge. Empty = auto-detect (first IPv4)",
+        "pl": "Callback host (optional). IP of this ioBroker system reachable by the bridge. Empty = auto-detect (first IPv4)",
+        "uk": "Callback host (optional). IP of this ioBroker system reachable by the bridge. Empty = auto-detect (first IPv4)",
+        "zh-cn": "Callback host (optional). IP of this ioBroker system reachable by the bridge. Empty = auto-detect (first IPv4)"
       }
     }
   }
