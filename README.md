@@ -91,6 +91,7 @@ The PIN names are read from the lock once at start and again when an unknown PIN
     ### **WORK IN PROGRESS**
 -->
 ### **WORK IN PROGRESS**
+- (ioBroker-Bot) Adapter requires admin >= 7.8.23 now.
 
 - (Schimi1983) Fix: webhook URL now uses an IP address instead of the ioBroker host name (new optional setting "Callback host")
 - (Schimi1983) Fix: only own webhooks are removed from the bridge, webhooks of other integrations (e.g. Home Assistant) are kept
