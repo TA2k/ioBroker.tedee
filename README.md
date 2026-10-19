@@ -91,6 +91,7 @@ The PIN names are read from the lock once at start and again when an unknown PIN
     ### **WORK IN PROGRESS**
 -->
 ### **WORK IN PROGRESS**
+- (ioBroker-Bot) Adapter requires admin >= 7.8.23 now.
 
 - (Schimi1983) Migrated to ESLint 9 with `@iobroker/eslint-config`
 - (Schimi1983) Adapter timers (`this.setTimeout`) and `node:` prefix for built-in modules
