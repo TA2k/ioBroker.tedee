@@ -96,7 +96,8 @@
         "dsn": "https://802f699c7aa84a62b0bcb54b31485352@sentry.iobroker.net/226"
       }
     },
-    "stopTimeout": 2000
+    "stopTimeout": 2000,
+    "messagebox": true
   },
   "encryptedNative": [
     "token"
@@ -109,7 +110,8 @@
     "token": "",
     "interval": 60,
     "callbackHost": "",
-    "loadPinAliases": true
+    "loadPinAliases": true,
+    "pinManagement": false
   },
   "objects": [],
   "instanceObjects": [

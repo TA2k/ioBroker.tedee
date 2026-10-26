@@ -15,6 +15,7 @@ const { setTimeout: wait } = require('node:timers/promises');
 const express = require('express');
 const bodyParser = require('body-parser');
 const axiosRetry = require('axios-retry').default;
+const { PinManager, PinError } = require('./lib/pinManager');
 
 class Tedee extends utils.Adapter {
   /**
@@ -29,6 +30,7 @@ class Tedee extends utils.Adapter {
     this.on('ready', this.onReady.bind(this));
     this.on('stateChange', this.onStateChange.bind(this));
     this.on('unload', this.onUnload.bind(this));
+    this.on('message', this.onMessage.bind(this));
     this.deviceArray = [];
     this.userAgent = `ioBroker v${this.version}`;
     this.apiVersion = 'v1.0';
@@ -67,6 +69,7 @@ class Tedee extends utils.Adapter {
     });
     this.updateTimeout = null;
     this.isUnloading = false;
+    this.pinManager = new PinManager(this);
     this.session = {};
     /**
      * Webhook "source" values of lock-status-changed events.
@@ -144,6 +147,71 @@ class Tedee extends utils.Adapter {
     await this.sleep(1500);
     await this.startWebhooks();
     this.scheduleUpdate();
+    if (this.config.pinManagement) {
+      this.pinManager.start().catch((e) => this.log.warn(`PIN management: ${e.message}`));
+    } else {
+      await this.removePinObjects();
+    }
+  }
+
+  /**
+   * Removes the pins channels if PIN management is switched off.
+   *
+   * @returns {Promise<void>}
+   */
+  async removePinObjects() {
+    const prefix = `${this.namespace}.`;
+    const channels = await this.getObjectViewAsync('system', 'channel', {
+      startkey: prefix,
+      endkey: `${prefix}\u9999`,
+    });
+    for (const row of channels.rows || []) {
+      if (/^[^.]+\.pins$/.test(row.id.substring(prefix.length))) {
+        await this.delObjectAsync(row.id, { recursive: true });
+      }
+    }
+  }
+
+  /**
+   * Handles sendTo commands (PIN management).
+   *
+   * @param {ioBroker.Message} obj message
+   * @returns {Promise<void>}
+   */
+  async onMessage(obj) {
+    if (!obj || !obj.command) {
+      return;
+    }
+    /**
+     * @param {object} result answer for the caller
+     */
+    const reply = (result) => {
+      if (obj.callback) {
+        this.sendTo(obj.from, obj.command, result, obj.callback);
+      }
+    };
+    const commands = ['getPins', 'getPin', 'createPin', 'updatePin', 'deletePin', 'refreshPins'];
+    if (!commands.includes(obj.command)) {
+      reply({ error: `unknown command ${obj.command}` });
+      return;
+    }
+    if (!this.config.pinManagement) {
+      reply({ error: 'PIN management is disabled in the instance settings' });
+      return;
+    }
+    try {
+      reply(
+        await this.pinManager.handleCommand(
+          obj.command,
+          /** @type {import('./lib/pinManager').PinCommand & import('./lib/pinManager').PinInput} */ (obj.message),
+        ),
+      );
+    } catch (error) {
+      // @KI_HINWEIS: only the error message is returned/logged, never the request (it may contain the PIN code)
+      const message = error instanceof PinError ? error.message : `internal error: ${error.message}`;
+      this.log.warn(`${obj.command}: ${message}`);
+      reply({ error: message });
+    }
   }
 
   /**
@@ -274,7 +342,10 @@ class Tedee extends utils.Adapter {
           }
           if (device.type === 2 || device.type === 4) {
             await this.createLastActionObjects(id);
-            if (this.config.loadPinAliases !== false) {
+            if (this.config.pinManagement) {
+              // the PIN manager loads the complete list incl. aliases after the webhooks are registered
+              this.pinManager.addLock(id);
+            } else if (this.config.loadPinAliases !== false) {
               this.loadPinAliases(id).catch((e) => this.log.debug(`PIN list: ${e}`));
             }
           }
@@ -634,6 +705,9 @@ class Tedee extends utils.Adapter {
           const id = device.id.toString().replace(this.FORBIDDEN_CHARS, '_');
           this.json2iob.parse(id, device, { forceIndex: true, states: this.states });
         }
+        if (this.config.pinManagement) {
+          await this.pinManager.updateActive();
+        }
       })
       .catch((error) => {
         //check for socket hangup
@@ -678,6 +752,10 @@ class Tedee extends utils.Adapter {
       if (!state.ack) {
         const deviceId = id.split('.')[2];
         let command = id.split('.')[4];
+        if (id.split('.')[3] === 'pins' && this.config.pinManagement) {
+          await this.pinManager.handleStateChange(deviceId, id.split('.').slice(4));
+          return;
+        }
         if (id.split('.')[3] !== 'remote') {
           return;
         }

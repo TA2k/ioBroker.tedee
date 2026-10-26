@@ -1,174 +1,184 @@
 {
-  "i18n": false,
-  "type": "panel",
+  "i18n": true,
+  "type": "tabs",
   "items": {
-    "bridgeip": {
-      "type": "text",
-      "label": {
-        "en": "Bridge IP",
-        "de": "Bridge IP",
-        "ru": "Мост Ip",
-        "pt": "Ponte Ip",
-        "nl": "Bridge Ip",
-        "fr": "Bridge Ip",
-        "it": "Ponte Ip",
-        "es": "Puente Ip",
-        "pl": "Bridge",
-        "uk": "Міст Ip",
-        "zh-cn": "Bridge Ip"
-      },
-      "newLine": true,
-      "xs": 12,
-      "sm": 12,
-      "md": 6,
-      "lg": 4,
-      "xl": 4
-    },
-    "token": {
-      "type": "password",
-      "newLine": true,
-      "repeat": false,
-      "visible": true,
-      "xs": 12,
-      "sm": 12,
-      "md": 6,
-      "lg": 4,
-      "xl": 4,
-      "label": {
-        "en": "Bridge Token",
-        "de": "Bridge Token",
-        "ru": "Мост Токен",
-        "pt": "Token de ponte",
-        "nl": "Bridge Token",
-        "fr": "Bridge Token",
-        "it": "Token del ponte",
-        "es": "Puente Token",
-        "pl": "Bridge Token (ang.)",
-        "uk": "Міст Token",
-        "zh-cn": "Bridge Token"
+    "tab_connection": {
+      "type": "panel",
+      "label": "Connection",
+      "items": {
+        "_hdrBridge": {
+          "type": "header",
+          "text": "Tedee Bridge",
+          "size": 3,
+          "newLine": true,
+          "xs": 12,
+          "sm": 12,
+          "md": 12,
+          "lg": 12,
+          "xl": 12
+        },
+        "_description": {
+          "type": "staticText",
+          "text": "Open the Tedee app and enable Beta Testing in the user profile. Then select the bridge, go to Settings -> API and switch the API on. Enter the IP address and the token of the bridge below.",
+          "newLine": true,
+          "xs": 12,
+          "sm": 12,
+          "md": 12,
+          "lg": 12,
+          "xl": 12
+        },
+        "_docLink": {
+          "type": "staticLink",
+          "label": "Bridge API documentation",
+          "href": "https://docs.tedee.com/bridge-api#tag/Getting-started",
+          "button": true,
+          "icon": "info",
+          "newLine": true,
+          "xs": 12,
+          "sm": 12,
+          "md": 6,
+          "lg": 4,
+          "xl": 4
+        },
+        "_image": {
+          "type": "staticImage",
+          "src": "https://raw.githubusercontent.com/TA2k/ioBroker.tedee/main/admin/tedee_api.png",
+          "newLine": true,
+          "xs": 12,
+          "sm": 12,
+          "md": 8,
+          "lg": 6,
+          "xl": 6
+        },
+        "bridgeip": {
+          "type": "text",
+          "label": "Bridge IP",
+          "placeholder": "192.168.x.x",
+          "help": "IP address or host name of the Tedee Bridge",
+          "validator": "!!data.bridgeip && data.bridgeip.trim().length > 0",
+          "validatorErrorText": "Please enter the IP address of the bridge",
+          "validatorNoSaveOnError": true,
+          "newLine": true,
+          "xs": 12,
+          "sm": 12,
+          "md": 6,
+          "lg": 4,
+          "xl": 4
+        },
+        "token": {
+          "type": "password",
+          "label": "Bridge Token",
+          "help": "API token from the Tedee app (Bridge -> Settings -> API)",
+          "repeat": false,
+          "visible": true,
+          "newLine": true,
+          "xs": 12,
+          "sm": 12,
+          "md": 6,
+          "lg": 4,
+          "xl": 4
+        },
+        "_hdrWebhook": {
+          "type": "header",
+          "text": "Webhooks and polling",
+          "size": 3,
+          "newLine": true,
+          "xs": 12,
+          "sm": 12,
+          "md": 12,
+          "lg": 12,
+          "xl": 12
+        },
+        "callbackHost": {
+          "type": "text",
+          "label": "Callback host",
+          "placeholder": "auto",
+          "help": "IP of this ioBroker system that the bridge can reach (port 29170). Empty = first IPv4 address. Needed for Docker, several network interfaces or IPv6.",
+          "newLine": true,
+          "xs": 12,
+          "sm": 12,
+          "md": 6,
+          "lg": 4,
+          "xl": 4
+        },
+        "interval": {
+          "type": "number",
+          "label": "Update interval",
+          "help": "Status updates arrive immediately via webhooks, polling is only a backup",
+          "min": 1,
+          "max": 86400,
+          "unit": "s",
+          "newLine": true,
+          "xs": 12,
+          "sm": 12,
+          "md": 6,
+          "lg": 4,
+          "xl": 4
+        }
       }
     },
-    "_description": {
-      "type": "staticText",
-      "label": {
-        "en": "Open Tedee app. Enable Beta Testing in the user profile. Go to selected Bridge -> Settings -> API -> then toggle the switch button.",
-        "de": "Öffnen Sie Tedee App. Aktiviere Beta Testing im Benutzerprofil. In der Bridge -> Einstellungen -> API -> einschalten",
-        "ru": "Open Tedee приложение. Включить Beta Тестирование в профиле пользователя. Перейти к выбранному мосту -> Настройки -> API -> затем переключить кнопку переключения.",
-        "pt": "Abra o aplicativo Tedee. Ativar Beta Teste no perfil do usuário. Vá para Ponte selecionada -> Configurações -> API -> em seguida, alterne o botão de interruptor.",
-        "nl": "Open Tedee app. Beta Test in het gebruikersprofiel. Ga naar geselecteerde Brug, smokkelt de knop om.",
-        "fr": "Ouvrez l'application Tedee. Activer Beta Test dans le profil utilisateur. Allez sur le pont sélectionné - Paramètres phytosanitaires - Aptitude phytopathique puis le bouton de commutation.",
-        "it": "Apri l'app Tedee. Attiva Beta Test nel profilo utente. Vai a Ponte selezionato -> Impostazioni -> API -> quindi attivare il pulsante di interruttore.",
-        "es": "Abre la aplicación Tedee. Enable Beta Pruebas en el perfil de usuario. Vaya al puente seleccionado - Configuración de títulos - Contraseña API - confiar luego cambiar el botón de interruptor.",
-        "pl": "Otwarta aplikacja. Enable Beta Testowanie w profilu użytkownika. Go to selected Bridge -> Settings -> API -> -> - ulepszyć przycisk.",
-        "uk": "Відкрийте додаток Tedee. Увімкнути Beta Тестування в профілі користувача. Перейти до вибраного Міста -> Налаштування -> API -> потім toggle Кнопка перемикання.",
-        "zh-cn": "开放的受让人。 附录 用户概况的试验。 某些桥梁——配给—— —— SP- —— —— —— —— —— —— —— —— 然后将转换成顿。."
-      },
-      "newLine": true,
-      "xs": 12,
-      "sm": 12,
-      "md": 12,
-      "lg": 12,
-      "xl": 12
-    },
-    "_docLink": {
-      "type": "staticLink",
-      "label": {
-        "en": "Documentation",
-        "de": "Dokumentation",
-        "ru": "Документация",
-        "pt": "Documentação",
-        "nl": "Documentatie",
-        "fr": "Documentation",
-        "it": "Documentazione",
-        "es": "Documentación",
-        "pl": "Dokumentacja",
-        "uk": "Документація",
-        "zh-cn": "文档"
-      },
-      "href": "https://docs.tedee.com/bridge-api#tag/Getting-started",
-      "newLine": true,
-      "xs": 12,
-      "sm": 12,
-      "md": 12,
-      "lg": 12,
-      "xl": 12
-    },
-    "_image": {
-      "type": "staticImage",
-      "src": "https://raw.githubusercontent.com/TA2k/ioBroker.tedee/main/admin/tedee_api.png",
-      "newLine": true,
-      "xs": 12,
-      "sm": 12,
-      "md": 12,
-      "lg": 12,
-      "xl": 12
-    },
-
-    "loadPinAliases": {
-      "type": "checkbox",
-      "newLine": true,
-      "xs": 12,
-      "sm": 12,
-      "md": 12,
-      "lg": 12,
-      "xl": 12,
-      "label": {
-        "en": "Load PIN names from the lock (lastAction.pinAlias). Blocks the bridge ~1 s per 5 PINs while loading",
-        "de": "PIN-Namen vom Schloss laden (lastAction.pinAlias). Blockiert die Bridge beim Laden ca. 1 s pro 5 PINs",
-        "ru": "Load PIN names from the lock (lastAction.pinAlias). Blocks the bridge ~1 s per 5 PINs while loading",
-        "pt": "Load PIN names from the lock (lastAction.pinAlias). Blocks the bridge ~1 s per 5 PINs while loading",
-        "nl": "Load PIN names from the lock (lastAction.pinAlias). Blocks the bridge ~1 s per 5 PINs while loading",
-        "fr": "Load PIN names from the lock (lastAction.pinAlias). Blocks the bridge ~1 s per 5 PINs while loading",
-        "it": "Load PIN names from the lock (lastAction.pinAlias). Blocks the bridge ~1 s per 5 PINs while loading",
-        "es": "Load PIN names from the lock (lastAction.pinAlias). Blocks the bridge ~1 s per 5 PINs while loading",
-        "pl": "Load PIN names from the lock (lastAction.pinAlias). Blocks the bridge ~1 s per 5 PINs while loading",
-        "uk": "Load PIN names from the lock (lastAction.pinAlias). Blocks the bridge ~1 s per 5 PINs while loading",
-        "zh-cn": "Load PIN names from the lock (lastAction.pinAlias). Blocks the bridge ~1 s per 5 PINs while loading"
-      }
-    },
-    "interval": {
-      "type": "number",
-      "newLine": true,
-      "min": 1,
-      "xs": 12,
-      "sm": 12,
-      "md": 6,
-      "lg": 4,
-      "xl": 4,
-      "label": {
-        "en": "Update interval (in seconds). Only backup if webhooks are not working",
-        "de": "Update-Intervall (in Sekunden). Nur Backup, falls Webhooks nicht funktionieren",
-        "ru": "Интервал обновления (в секундах). Только резервное копирование, если webhooks не работает",
-        "pt": "Intervalo de atualização (em segundos). Apenas backup se webhooks não estão funcionando",
-        "nl": "Update interval (in seconden) Alleen back-up als webhooks niet werken",
-        "fr": "Mettre à jour l'intervalle (en secondes). Seulement la sauvegarde si webhooks ne fonctionnent pas",
-        "it": "Intervallo di aggiornamento (in secondi). Solo il backup se webhooks non funziona",
-        "es": "Intervalo de actualización (en segundos). Sólo respaldo si los webhooks no funcionan",
-        "pl": "Update interval (ang.). Tylko w przypadku, gdy węzły nie pracują",
-        "uk": "Період оновлення (в секундах). Тільки резервні копії, якщо webhooks не працює",
-        "zh-cn": "最新间隔(第二期)。 只有当网站没有工作时,才得到支持。"
-      }
-    },
-    "callbackHost": {
-      "type": "text",
-      "newLine": true,
-      "xs": 12,
-      "sm": 12,
-      "md": 6,
-      "lg": 4,
-      "xl": 4,
-      "label": {
-        "en": "Callback host (optional). IP of this ioBroker system reachable by the bridge. Empty = auto-detect (first IPv4)",
-        "de": "Callback-Host (optional). IP dieses ioBroker-Systems, die die Bridge erreicht. Leer = automatisch (erste IPv4)",
-        "ru": "Callback host (optional). IP of this ioBroker system reachable by the bridge. Empty = auto-detect (first IPv4)",
-        "pt": "Callback host (optional). IP of this ioBroker system reachable by the bridge. Empty = auto-detect (first IPv4)",
-        "nl": "Callback host (optional). IP of this ioBroker system reachable by the bridge. Empty = auto-detect (first IPv4)",
-        "fr": "Callback host (optional). IP of this ioBroker system reachable by the bridge. Empty = auto-detect (first IPv4)",
-        "it": "Callback host (optional). IP of this ioBroker system reachable by the bridge. Empty = auto-detect (first IPv4)",
-        "es": "Callback host (optional). IP of this ioBroker system reachable by the bridge. Empty = auto-detect (first IPv4)",
-        "pl": "Callback host (optional). IP of this ioBroker system reachable by the bridge. Empty = auto-detect (first IPv4)",
-        "uk": "Callback host (optional). IP of this ioBroker system reachable by the bridge. Empty = auto-detect (first IPv4)",
-        "zh-cn": "Callback host (optional). IP of this ioBroker system reachable by the bridge. Empty = auto-detect (first IPv4)"
+    "tab_pins": {
+      "type": "panel",
+      "label": "PINs",
+      "items": {
+        "_hdrPins": {
+          "type": "header",
+          "text": "Keypad PINs",
+          "size": 3,
+          "newLine": true,
+          "xs": 12,
+          "sm": 12,
+          "md": 12,
+          "lg": 12,
+          "xl": 12
+        },
+        "_pinInfo": {
+          "type": "staticText",
+          "text": "Requires a Tedee Keypad and Bridge API 1.19 or newer. While the bridge reads the PIN list from the lock it cannot handle other requests (about 1 second per 5 PINs).",
+          "newLine": true,
+          "xs": 12,
+          "sm": 12,
+          "md": 12,
+          "lg": 12,
+          "xl": 12
+        },
+        "loadPinAliases": {
+          "type": "checkbox",
+          "label": "Load PIN names for lastAction",
+          "help": "Shows the name of the PIN in lastAction.pinAlias when the lock is opened with the keypad",
+          "disabled": "data.pinManagement === true",
+          "newLine": true,
+          "xs": 12,
+          "sm": 12,
+          "md": 12,
+          "lg": 12,
+          "xl": 12
+        },
+        "pinManagement": {
+          "type": "checkbox",
+          "label": "Enable PIN management",
+          "help": "Shows all PINs of the lock as states and allows to create, change and delete PINs (sendTo commands and delete button). PIN codes are never stored in states.",
+          "newLine": true,
+          "xs": 12,
+          "sm": 12,
+          "md": 12,
+          "lg": 12,
+          "xl": 12
+        },
+        "_pinDocLink": {
+          "type": "staticLink",
+          "label": "Instructions for the PIN management",
+          "href": "https://github.com/TA2k/ioBroker.tedee#pin-management",
+          "button": true,
+          "icon": "info",
+          "hidden": "data.pinManagement !== true",
+          "newLine": true,
+          "xs": 12,
+          "sm": 12,
+          "md": 6,
+          "lg": 4,
+          "xl": 4
+        }
       }
     }
   }
