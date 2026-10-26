@@ -170,7 +170,45 @@ sendTo('tedee.0', 'updatePin', { pinId: 5, endDate: '2026-12-31' }, (res) => log
 sendTo('tedee.0', 'deletePin', { pinId: 5 }, (res) => log(JSON.stringify(res)));
 ```
 
-In Blockly use the block **sendTo** (category _Actions_) with instance `tedee.0`, the command and the parameters as JSON.
+### Example (Blockly)
+
+Use the block **sendTo** (category _Sendto_), set the instance `tedee.0` and the command, and add one parameter per field with the gear icon. Keep the PIN as text, otherwise leading zeros are lost. Weekdays can be given as text, e.g. `Sa,So` or `Sat,Sun`. Do not set a log level on this block, it would write the parameters incl. the PIN code to the log. The adapter logs the result itself (`PIN "Guest" created (id 5)` or the error).
+
+To import the example: Blockly editor → **Import blocks** (icon at the top right) → paste the XML. Change the values before you run it, the example creates a real PIN on your lock.
+
+<details>
+<summary>Blockly XML: create a guest PIN and delete a PIN</summary>
+
+```xml
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="sendto_custom" x="20" y="20">
+    <mutation xmlns="http://www.w3.org/1999/xhtml" items="pin,alias,startDate,endDate,weekdays,dayStartTime,dayEndTime"></mutation>
+    <field name="INSTANCE">tedee.0</field>
+    <field name="COMMAND">createPin</field>
+    <field name="LOG"></field>
+    <field name="WITH_STATEMENT">FALSE</field>
+    <value name="ARG0"><shadow type="text"><field name="TEXT">482913</field></shadow></value>
+    <value name="ARG1"><shadow type="text"><field name="TEXT">Guest</field></shadow></value>
+    <value name="ARG2"><shadow type="text"><field name="TEXT">2026-11-01</field></shadow></value>
+    <value name="ARG3"><shadow type="text"><field name="TEXT">2026-11-30</field></shadow></value>
+    <value name="ARG4"><shadow type="text"><field name="TEXT">Sa,So</field></shadow></value>
+    <value name="ARG5"><shadow type="text"><field name="TEXT">10:00</field></shadow></value>
+    <value name="ARG6"><shadow type="text"><field name="TEXT">18:00</field></shadow></value>
+  </block>
+  <block type="sendto_custom" x="20" y="300">
+    <mutation xmlns="http://www.w3.org/1999/xhtml" items="pinId"></mutation>
+    <field name="INSTANCE">tedee.0</field>
+    <field name="COMMAND">deletePin</field>
+    <field name="LOG"></field>
+    <field name="WITH_STATEMENT">FALSE</field>
+    <value name="ARG0"><shadow type="math_number"><field name="NUM">5</field></shadow></value>
+  </block>
+</xml>
+```
+
+</details>
+
+The blocks generate the same code as the JavaScript example above, e.g. `sendTo('tedee.0', 'createPin', { 'pin': '482913', 'alias': 'Guest', ... });`. Connect them to a trigger (e.g. a VIS button state) or run the script once.
 
 ### Notes
 
