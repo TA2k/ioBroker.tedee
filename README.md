@@ -225,24 +225,18 @@ The blocks generate the same code as the JavaScript example above, e.g. `sendTo(
 -->
 ### **WORK IN PROGRESS**
 
-- (Schimi1983) PIN management: show, create, change and delete keypad PINs (states `pins.*`, sendTo commands)
-- (Schimi1983) Instance settings with tabs, translations moved to `admin/i18n`
-- (Schimi1983) Fix: requests to the bridge failed with ECONNRESET on reused connections (Node >= 19), lock commands could fail
-- (Schimi1983) Fix: adapter was killed on stop (stopTimeout 5 s, webhook connections closed)
-- (ioBroker-Bot) Adapter requires admin >= 7.8.23 now.
-- (Schimi1983) Migrated to ESLint 9 with `@iobroker/eslint-config`
-- (Schimi1983) Adapter timers (`this.setTimeout`) and `node:` prefix for built-in modules
-- (Schimi1983) Fix: webhook URL now uses an IP address instead of the ioBroker host name (new optional setting "Callback host")
-- (Schimi1983) Fix: only own webhooks are removed from the bridge, webhooks of other integrations (e.g. Home Assistant) are kept
-- (Schimi1983) Fix: lock/unlock/pull commands are no longer repeated automatically on 405/406 or connection errors
-- (Schimi1983) Fix: "mode" header is only sent for unlock and validated (0, 2, 3, 4)
-- (Schimi1983) Fix: polling waits for the previous request (bridge handles one request at a time)
-- (Schimi1983) Fix: added lock state 255 (Unpulling), state 3 (partially open) sets remote.lock to false
-- (Schimi1983) Webhook server listens on IPv4 and IPv6
-- (Schimi1983) New channel `lastAction` per lock: who/how the lock was operated (app, keypad PIN incl. PIN alias, fingerprint) [#13]
-- (Schimi1983) Node.js >= 22, js-controller >= 6.0.11 and admin >= 7.6.17 required
-- (Schimi1983) Dependencies updated, tests for Node.js 22, 24 and 26
-- (Schimi1983) Admin UI: responsive layout
+- (Schimi1983) New: PIN management for keypad PINs (show, create, change, delete), see section "PIN management" [#49]
+- (Schimi1983) New: channel `lastAction` shows who and how the lock was operated, incl. the PIN name [#13]
+- (Schimi1983) New: optional setting "Callback host" for webhooks (Docker, several network interfaces, IPv6)
+- (Schimi1983) Instance settings reworked: tabs, help texts, translations
+- (Schimi1983) Fix: webhooks are registered with the IP address instead of the host name
+- (Schimi1983) Fix: webhooks of other systems (e.g. Home Assistant) are no longer deleted
+- (Schimi1983) Fix: lock commands are no longer repeated on errors and no longer fail with ECONNRESET
+- (Schimi1983) Fix: unlock mode is validated, polling waits for the previous request
+- (Schimi1983) Fix: lock states 3 (partially open) and 255 (unpulling)
+- (Schimi1983) Fix: clean shutdown, the adapter was killed on stop
+- (Schimi1983, ioBroker-Bot) Node.js >= 22, js-controller >= 6.0.11 and admin >= 7.8.23 required
+- (Schimi1983) Dependencies updated, ESLint 9, tests for Node.js 22, 24 and 26
 
 ### 0.3.2 (2024-04-10)
 
@@ -260,7 +254,7 @@ Tedee is a trademark of tedee. I am in no way endorsed by or affiliated with ted
 
 MIT License
 
-Copyright (c) 2024-2025 TA2k <tombox2020@gmail.com>
+Copyright (c) 2024-2026 TA2k <tombox2020@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
