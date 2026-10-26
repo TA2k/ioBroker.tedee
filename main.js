@@ -11,6 +11,7 @@ const axios = require('axios').default;
 const Json2iob = require('json2iob');
 const crypto = require('node:crypto');
 const os = require('node:os');
+const http = require('node:http');
 const { setTimeout: wait } = require('node:timers/promises');
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -40,6 +41,10 @@ class Tedee extends utils.Adapter {
       withCredentials: true,
       headers: { 'user-agent': this.userAgent },
       timeout: 3 * 60 * 1000, //3min client timeout
+      // @KI_HINWEIS: Node >= 19 keeps HTTP connections alive by default. The bridge closes idle
+      // connections, so the next request on a reused socket failed with ECONNRESET. Lock and PIN
+      // commands are not retried, they failed completely. One connection per request avoids this.
+      httpAgent: new http.Agent({ keepAlive: false }),
     });
     //retry on 405-599 and timeout
     //calculate a new header for each retry
@@ -733,7 +738,11 @@ class Tedee extends utils.Adapter {
       //wait to prevent busy bridge
       await this.sleep(500);
       await this.cleanWebhooks();
-      this.webhookServer && this.webhookServer.close();
+      if (this.webhookServer) {
+        this.webhookServer.close();
+        // open keep-alive connections of the bridge would keep the process alive until it is killed
+        this.webhookServer.closeAllConnections();
+      }
       this.setState('info.connection', false, true);
       callback();
     } catch {

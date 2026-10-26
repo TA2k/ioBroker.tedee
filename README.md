@@ -189,6 +189,8 @@ In Blockly use the block **sendTo** (category _Actions_) with instance `tedee.0`
 
 - (Schimi1983) PIN management: show, create, change and delete keypad PINs (states `pins.*`, sendTo commands)
 - (Schimi1983) Instance settings with tabs, translations moved to `admin/i18n`
+- (Schimi1983) Fix: requests to the bridge failed with ECONNRESET on reused connections (Node >= 19), lock commands could fail
+- (Schimi1983) Fix: adapter was killed on stop (stopTimeout 5 s, webhook connections closed)
 - (ioBroker-Bot) Adapter requires admin >= 7.8.23 now.
 - (Schimi1983) Migrated to ESLint 9 with `@iobroker/eslint-config`
 - (Schimi1983) Adapter timers (`this.setTimeout`) and `node:` prefix for built-in modules
