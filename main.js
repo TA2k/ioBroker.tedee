@@ -84,9 +84,10 @@ class Tedee extends utils.Adapter {
      */
     this.actionSources = {
       1: 'Button / manual',
-      2: 'App / API',
+      2: 'App / cloud API',
       7: 'Auto pull spring',
       10: 'Keypad',
+      18: 'Local Bridge API (e.g. ioBroker)',
       22: 'Keypad (pull spring)',
       23: 'Fingerprint',
       24: 'Fingerprint (pull spring)',
@@ -851,8 +852,11 @@ class Tedee extends utils.Adapter {
           // never repeat a lock command automatically, see constructor
           'axios-retry': { retries: 0 },
         })
-          .then(async (res) => {
-            this.log.info(JSON.stringify(res.data));
+          .then((res) => {
+            // @KI_HINWEIS: the bridge answers lock commands with 202 and an empty body,
+            // logging res.data at info level only produced a line with "".
+            this.log.info(`Command ${command} sent to lock ${deviceId}`);
+            this.log.debug(`Bridge response ${res.status}: ${JSON.stringify(res.data)}`);
           })
           .catch((error) => {
             this.log.error(error);
