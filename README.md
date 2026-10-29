@@ -72,13 +72,13 @@ Unlock modes:
 
 Each lock gets a channel `tedee.0.<lockId>.lastAction`, filled by the webhooks:
 
-| State        | Content                                                                     |
-| ------------ | --------------------------------------------------------------------------- |
-| `action`     | `unlock`, `lock` or `pull`. Written last, use it as trigger in scripts      |
-| `source`     | how: 1 = Button / manual, 2 = App / API, 10 = Keypad, 23 = Fingerprint      |
-| `sourceName` | text of `source`                                                            |
-| `userId`     | Tedee user id (app), PIN id (keypad) or fingerprint id; empty if unknown    |
-| `pinAlias`   | name of the PIN for keypad actions (Bridge API 1.19+, loaded from the lock) |
+| State        | Content                                                                         |
+| ------------ | ------------------------------------------------------------------------------- |
+| `action`     | `unlock`, `lock` or `pull`. Written last, use it as trigger in scripts          |
+| `source`     | how: 1 = Button / manual, 2 = App, 10 = Keypad, 18 = ioBroker, 23 = Fingerprint |
+| `sourceName` | text of `source`                                                                |
+| `userId`     | Tedee user id (app), PIN id (keypad) or fingerprint id; empty if unknown        |
+| `pinAlias`   | name of the PIN for keypad actions (Bridge API 1.19+, loaded from the lock)     |
 
 The `source` values are not documented by Tedee and were determined with a Lock PRO and Keypad PRO. Unknown values are shown as `Unknown (n)`, please report them.
 
@@ -223,6 +223,12 @@ The blocks generate the same code as the JavaScript example above, e.g. `sendTo(
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+
+### **WORK IN PROGRESS**
+
+- (Schimi1983) Fix: lock commands logged an empty line `""`, now `Command lock sent to lock <id>`
+- (Schimi1983) `lastAction.source` 18 = command via the local Bridge API (e.g. ioBroker)
+
 ### 0.4.1 (2026-10-29)
 
 - (Schimi1983) Repository checker findings fixed: Node.js 24 for lint and deploy, placeholder translation, Dependabot added [#52]
