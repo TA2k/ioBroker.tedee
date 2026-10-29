@@ -23,7 +23,7 @@
     "@iobroker/adapter-core": "^3.4.3",
     "axios": "^1.20.0",
     "axios-retry": "^4.5.0",
-    "body-parser": "^1.20.8",
+    "body-parser": "^2.4.0",
     "express": "^4.22.3",
     "json2iob": "^2.6.28"
   },
