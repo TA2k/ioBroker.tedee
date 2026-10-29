@@ -223,7 +223,7 @@ The blocks generate the same code as the JavaScript example above, e.g. `sendTo(
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-### **WORK IN PROGRESS**
+### 0.4.0 (2026-10-29)
 
 - (Schimi1983) New: PIN management for keypad PINs (show, create, change, delete), see section "PIN management" [#49]
 - (Schimi1983) New: channel `lastAction` shows who and how the lock was operated, incl. the PIN name [#13]
