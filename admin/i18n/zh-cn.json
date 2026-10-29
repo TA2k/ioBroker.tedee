@@ -1,4 +1,5 @@
 {
+  "192.168.x.x": "192.168.x.x",
   "API token from the Tedee app (Bridge -> Settings -> API)": "Tedee 应用中的 API 令牌（网桥 -> 设置 -> API）",
   "Bridge API documentation": "Bridge API 文档",
   "Bridge IP": "网桥 IP",

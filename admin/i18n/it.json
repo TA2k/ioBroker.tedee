@@ -1,4 +1,5 @@
 {
+  "192.168.x.x": "192.168.x.x",
   "API token from the Tedee app (Bridge -> Settings -> API)": "Token API dall'app Tedee (Bridge -> Impostazioni -> API)",
   "Bridge API documentation": "Documentazione Bridge API",
   "Bridge IP": "IP del bridge",
