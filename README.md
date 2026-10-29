@@ -129,14 +129,14 @@ All commands return `{ error: '...' }` if something went wrong. `lockId` can be 
 
 Fields for `createPin` / `updatePin`:
 
-| Field          | Format                                                                                         |
-| -------------- | ---------------------------------------------------------------------------------------------- |
-| `pin`          | string with 5 – 8 digits, e.g. `'048213'` (use a string, otherwise leading zeros are lost)     |
-| `alias`        | name, max. 32 bytes                                                                            |
-| `startDate`    | `'2026-11-01'`, `'2026-11-01T08:00'`, timestamp in ms or s; `null` = unbounded                 |
-| `endDate`      | as `startDate`; a plain date means the end of that day (23:59:59)                              |
-| `dayStartTime` | `'08:00'` or seconds from midnight; `null` = whole day                                         |
-| `dayEndTime`   | `'16:30'` or seconds from midnight; `null` = whole day                                         |
+| Field          | Format                                                                                        |
+| -------------- | --------------------------------------------------------------------------------------------- |
+| `pin`          | string with 5 – 8 digits, e.g. `'048213'` (use a string, otherwise leading zeros are lost)    |
+| `alias`        | name, max. 32 bytes                                                                           |
+| `startDate`    | `'2026-11-01'`, `'2026-11-01T08:00'`, timestamp in ms or s; `null` = unbounded                |
+| `endDate`      | as `startDate`; a plain date means the end of that day (23:59:59)                             |
+| `dayStartTime` | `'08:00'` or seconds from midnight; `null` = whole day                                        |
+| `dayEndTime`   | `'16:30'` or seconds from midnight; `null` = whole day                                        |
 | `weekdays`     | `['Sat', 'Sun']` (also German `['Sa', 'So']`), day numbers `[6, 7]` (1 = Mon) or bitmask `96` |
 
 `updatePin` keeps all fields that are not given, including the PIN code.
@@ -223,6 +223,7 @@ The blocks generate the same code as the JavaScript example above, e.g. `sendTo(
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+
 ### **WORK IN PROGRESS**
 
 - (Schimi1983) Repository checker findings fixed: Node.js 24 for lint and deploy, placeholder translation, Dependabot added [#52]
