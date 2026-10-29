@@ -10,6 +10,12 @@ updates:
     versioning-strategy: increase
     cooldown:
       default-days: 7
+    ignore:
+      # @types/node and @tsconfig/node follow the minimum Node.js version in "engines"
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@tsconfig/node*'
+        update-types: ['version-update:semver-major']
 
   - package-ecosystem: github-actions
     directory: '/'

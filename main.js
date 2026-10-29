@@ -13,8 +13,6 @@ const crypto = require('node:crypto');
 const os = require('node:os');
 const http = require('node:http');
 const { setTimeout: wait } = require('node:timers/promises');
-const express = require('express');
-const bodyParser = require('body-parser');
 const axiosRetry = require('axios-retry').default;
 const { PinManager, PinError } = require('./lib/pinManager');
 
@@ -383,7 +381,6 @@ class Tedee extends utils.Adapter {
    * @returns {Promise<void>}
    */
   async startWebhooks() {
-    const app = express();
     const port = await this.getPortAsync(29170);
     const host = this.getCallbackHost();
     if (!host) {
@@ -393,33 +390,13 @@ class Tedee extends utils.Adapter {
       return;
     }
     this.callbackHost = host;
-    app.use(bodyParser.json());
-    app.use(bodyParser.urlencoded({ extended: true }));
+    // @KI_HINWEIS: plain node:http instead of express/body-parser. The bridge only POSTs small
+    // JSON bodies to one path, a framework adds ~60 packages and regular security updates for nothing.
+    this.webhookServer = http.createServer((req, res) => this.onWebhookRequest(req, res));
+    this.webhookServer.on('error', (error) => this.log.error(`Webhook server: ${error.message}`));
     // @KI_HINWEIS: no listen host -> Node binds to "::" (dual stack), so IPv4 and IPv6 callbacks both arrive.
-    this.webhookServer = app.listen(port, () => {
+    this.webhookServer.listen(port, () => {
       this.log.info(`Webhooks listening on port ${port} (IPv4 + IPv6)`);
-    });
-    app.post('/webhook', async (req, res) => {
-      this.log.debug(JSON.stringify(req.body));
-      if (this.firstWebhook == null) {
-        this.firstWebhook = Date.now();
-        this.log.info('Webhook connected successfully');
-      }
-      // @KI_HINWEIS: answer first. The bridge handles one request at a time and waits for
-      // this response, so a PIN list request inside the handler would block both sides.
-      res.send('OK');
-      if (req.body.data) {
-        let deviceId = req.body.data.deviceId;
-        if (deviceId) {
-          deviceId = deviceId.toString().replace(this.FORBIDDEN_CHARS, '_');
-          this.json2iob.parse(deviceId, req.body.data, { forceIndex: true, states: this.states });
-          if (req.body.event === 'lock-status-changed') {
-            this.handleLastAction(deviceId, req.body.data).catch((e) => this.log.warn(`lastAction: ${e}`));
-          }
-        } else {
-          this.json2iob.parse('bridge', req.body.data, { forceIndex: true });
-        }
-      }
     });
     //receive list of webhooks
     await this.cleanWebhooks();
@@ -448,6 +425,76 @@ class Tedee extends utils.Adapter {
         this.log.error(error);
         error.response && this.log.error(JSON.stringify(error.response.data));
       });
+  }
+
+  /**
+   * Handles a request of the bridge on the webhook server.
+   * Only `POST /webhook` with a JSON body (max. 64 kB) is accepted.
+   *
+   * @param {import('node:http').IncomingMessage} req incoming request
+   * @param {import('node:http').ServerResponse} res response
+   */
+  onWebhookRequest(req, res) {
+    if (req.method !== 'POST' || (req.url || '').split('?')[0] !== '/webhook') {
+      res.writeHead(404).end();
+      return;
+    }
+    /** @type {Buffer[]} */
+    const chunks = [];
+    let size = 0;
+    req.on('data', (chunk) => {
+      size += chunk.length;
+      if (size > 65536) {
+        res.writeHead(413).end();
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on('error', (error) => this.log.debug(`Webhook request: ${error.message}`));
+    req.on('end', () => {
+      if (res.writableEnded) {
+        return;
+      }
+      // @KI_HINWEIS: answer first. The bridge handles one request at a time and waits for
+      // this response, so a PIN list request inside the handler would block both sides.
+      res.writeHead(200, { 'Content-Type': 'text/plain' }).end('OK');
+      const raw = Buffer.concat(chunks).toString('utf8');
+      this.log.debug(raw);
+      let body;
+      try {
+        body = raw ? JSON.parse(raw) : {};
+      } catch (error) {
+        this.log.warn(`Invalid webhook payload: ${error}`);
+        return;
+      }
+      this.handleWebhook(body);
+    });
+  }
+
+  /**
+   * Processes a webhook event of the bridge.
+   *
+   * @param {{ event?: string, data?: { deviceId?: number | string, state?: number, source?: number, user_id?: number } }} body parsed webhook body
+   */
+  handleWebhook(body) {
+    if (this.firstWebhook == null) {
+      this.firstWebhook = Date.now();
+      this.log.info('Webhook connected successfully');
+    }
+    if (!body || !body.data) {
+      return;
+    }
+    let deviceId = body.data.deviceId;
+    if (deviceId) {
+      deviceId = deviceId.toString().replace(this.FORBIDDEN_CHARS, '_');
+      this.json2iob.parse(deviceId, body.data, { forceIndex: true, states: this.states });
+      if (body.event === 'lock-status-changed') {
+        this.handleLastAction(deviceId, body.data).catch((e) => this.log.warn(`lastAction: ${e}`));
+      }
+    } else {
+      this.json2iob.parse('bridge', body.data, { forceIndex: true });
+    }
   }
 
   /**
