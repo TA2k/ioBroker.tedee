@@ -228,6 +228,7 @@ The blocks generate the same code as the JavaScript example above, e.g. `sendTo(
 
 - (Schimi1983) Repository checker findings fixed: Node.js 24 for lint and deploy, placeholder translation, Dependabot added [#52]
 - (Schimi1983) Webhook server uses the built-in Node.js HTTP server, express and body-parser removed (52 packages less)
+- (Schimi1983) Dependencies updated (security fix for node-forge)
 
 ### 0.4.0 (2026-10-29)
 
