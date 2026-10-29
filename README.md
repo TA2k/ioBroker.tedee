@@ -223,6 +223,10 @@ The blocks generate the same code as the JavaScript example above, e.g. `sendTo(
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+
+- (Schimi1983) Repository checker findings fixed: Node.js 24 for lint and deploy, placeholder translation, Dependabot added [#52]
+
 ### 0.4.0 (2026-10-29)
 
 - (Schimi1983) New: PIN management for keypad PINs (show, create, change, delete), see section "PIN management" [#49]
