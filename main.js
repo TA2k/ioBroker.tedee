@@ -8,13 +8,26 @@
 // you need to create an adapter
 const utils = require('@iobroker/adapter-core');
 const axios = require('axios').default;
-const Json2iob = require('json2iob');
 const crypto = require('node:crypto');
 const os = require('node:os');
 const http = require('node:http');
 const { setTimeout: wait } = require('node:timers/promises');
 const axiosRetry = require('axios-retry').default;
 const { PinManager, PinError } = require('./lib/pinManager');
+const {
+  DEVICE_FIELDS,
+  SETTINGS_FIELDS,
+  BRIDGE_FIELDS,
+  DEVICE_TYPES,
+  IGNORED_KEYS,
+  OBSOLETE_STATES,
+  genericField,
+} = require('./lib/objects');
+
+/** Lock states after which the lock is open (remote.open = true) */
+const OPEN_STATES = [2, 3, 7, 8, 255];
+/** Lock state "locked" (remote.open = false) */
+const LOCKED_STATE = 6;
 
 class Tedee extends utils.Adapter {
   /**
@@ -33,7 +46,8 @@ class Tedee extends utils.Adapter {
     this.deviceArray = [];
     this.userAgent = `ioBroker v${this.version}`;
     this.apiVersion = 'v1.0';
-    this.json2iob = new Json2iob(this);
+    /** @type {Set<string>} objects created/updated in this adapter run */
+    this.knownObjects = new Set();
 
     this.requestClient = axios.create({
       withCredentials: true,
@@ -106,29 +120,6 @@ class Tedee extends utils.Adapter {
     this.lastActionTime = {};
     /** @type {Record<string, number>} last lock state reported by a webhook, per lock */
     this.lastLockState = {};
-    this.states = {
-      state: {
-        0: 'Uncalibrated',
-        1: 'Calibrating',
-        2: 'Unlocked',
-        3: 'SemiLocked',
-        4: 'Unlocking',
-        5: 'Locking',
-        6: 'Locked',
-        7: 'Pulled',
-        8: 'Pulling',
-        9: 'Unknown',
-        18: 'Updating',
-        255: 'Unpulling',
-      },
-      type: {
-        1: 'Bridge',
-        2: 'Lock PRO',
-        3: 'Keypad',
-        4: 'Lock GO',
-        5: 'Gate',
-      },
-    };
   }
 
   /**
@@ -150,7 +141,10 @@ class Tedee extends utils.Adapter {
       return;
     }
 
-    this.subscribeStates('*');
+    // only commands are needed, the adapter's own status states are not subscribed
+    this.subscribeStates('*.remote.*');
+    this.subscribeStates('*.pins.*');
+    await this.migrateObjects();
     await this.getDeviceList();
     await this.sleep(1500);
     await this.startWebhooks();
@@ -274,6 +268,11 @@ class Tedee extends utils.Adapter {
     }
     return null;
   }
+  /**
+   * Reads the bridge and all locks and creates/updates their objects.
+   *
+   * @returns {Promise<void>}
+   */
   async getDeviceList() {
     this.log.info(`Getting devices from bridge ${this.config.bridgeip}`);
     await this.requestClient({
@@ -287,14 +286,8 @@ class Tedee extends utils.Adapter {
       .then(async (res) => {
         this.setState('info.connection', true, true);
         this.log.debug(JSON.stringify(res.data));
-        await this.extendObjectAsync('bridge', {
-          type: 'device',
-          common: {
-            name: res.data.name,
-          },
-          native: {},
-        });
-        this.json2iob.parse('bridge', res.data, { forceIndex: true });
+        await this.ensureDevice('bridge', res.data.name || 'Bridge', {}, true);
+        await this.writeFields('bridge', res.data, BRIDGE_FIELDS);
       })
       .catch((error) => {
         this.log.error(error);
@@ -314,41 +307,15 @@ class Tedee extends utils.Adapter {
 
         for (const device of res.data) {
           const id = device.id.toString().replace(this.FORBIDDEN_CHARS, '_');
-
-          const name = device.name;
           this.deviceArray.push(device);
-
-          await this.extendObjectAsync(id, {
-            type: 'device',
-            common: {
-              name: name,
-            },
-            native: { type: device.type },
-          });
-          await this.setObjectNotExistsAsync(`${id}.remote`, {
-            type: 'channel',
-            common: {
-              name: 'Remote Controls',
-            },
-            native: {},
-          });
-          let remoteArray = [];
+          await this.ensureDevice(
+            id,
+            device.name || `${DEVICE_TYPES[device.type] || 'Device'} ${id}`,
+            { type: device.type },
+            true,
+          );
           if (device.type === 2 || device.type === 4) {
-            remoteArray = [
-              { command: 'refresh', name: 'True = Refresh' },
-              { command: 'lock', name: 'True = Lock, False = Unlock' },
-              {
-                command: 'unlock',
-                name: 'Unlock',
-                type: 'number',
-                role: 'level',
-                def: 0,
-                states: { 0: 'Unlock', 2: 'Force Unlock', 3: 'Without auto pull spring', 4: 'Unlock or pull spring' },
-              },
-              { command: 'pull', name: 'True = Pull' },
-            ];
-          }
-          if (device.type === 2 || device.type === 4) {
+            await this.createRemoteObjects(id);
             await this.createLastActionObjects(id);
             if (this.config.pinManagement) {
               // the PIN manager loads the complete list incl. aliases after the webhooks are registered
@@ -357,22 +324,7 @@ class Tedee extends utils.Adapter {
               this.loadPinAliases(id).catch((e) => this.log.debug(`PIN list: ${e}`));
             }
           }
-          for (const remote of remoteArray) {
-            this.extendObject(`${id}.remote.${remote.command}`, {
-              type: 'state',
-              common: {
-                name: remote.name || '',
-                type: remote.type || 'boolean',
-                role: remote.role || 'switch',
-                def: remote.def == null ? false : remote.def,
-                states: remote.states,
-                write: true,
-                read: true,
-              },
-              native: {},
-            });
-          }
-          this.json2iob.parse(id, device, { forceIndex: true, states: this.states });
+          await this.writeDevice(id, device);
         }
       })
       .catch((error) => {
@@ -380,6 +332,186 @@ class Tedee extends utils.Adapter {
         error.response && this.log.error(JSON.stringify(error.response.data));
       });
   }
+
+  /**
+   * Removes objects of older adapter versions and converts locks/keypads from channel to device.
+   *
+   * @returns {Promise<void>}
+   */
+  async migrateObjects() {
+    const prefix = `${this.namespace}.`;
+    let objects;
+    try {
+      objects = await this.getAdapterObjectsAsync();
+    } catch (error) {
+      this.log.warn(`Cannot read objects for migration: ${error.message}`);
+      return;
+    }
+    for (const [fullId, obj] of Object.entries(objects)) {
+      const id = fullId.substring(prefix.length);
+      const parts = id.split('.');
+      if (parts.length === 1 && obj.type === 'channel' && id !== 'info') {
+        // @KI_HINWEIS: up to 0.4.x json2iob turned the lock/bridge objects into channels without name
+        await this.extendObjectAsync(id, { type: 'device' });
+      }
+      const sub = parts.slice(1).join('.');
+      if (parts.length > 1 && OBSOLETE_STATES.includes(sub)) {
+        await this.delObjectAsync(id);
+        if (sub === 'remote.lock') {
+          this.log.warn(
+            `${id} was removed. Use ${parts[0]}.remote.open instead: true = unlock, false = lock (ioBroker role switch.lock)`,
+          );
+        }
+      }
+    }
+  }
+
+  /**
+   * Creates or updates a device object.
+   *
+   * @param {string} id device id
+   * @param {string} name name of the device
+   * @param {Record<string, unknown>} native native part
+   * @param {boolean} [rename] true: set the name even if the object exists (name from the bridge)
+   * @returns {Promise<void>}
+   */
+  async ensureDevice(id, name, native, rename) {
+    if (this.knownObjects.has(id) && !rename) {
+      return;
+    }
+    if (!rename) {
+      const existing = await this.getObjectAsync(id);
+      // keep a name the user gave the device, only fill in missing names (objects of 0.4.x had none)
+      if (existing && existing.type === 'device' && existing.common && existing.common.name) {
+        this.knownObjects.add(id);
+        return;
+      }
+    }
+    await this.extendObjectAsync(id, { type: 'device', common: { name }, native });
+    this.knownObjects.add(id);
+  }
+
+  /**
+   * Creates an object once per adapter run (extendObject keeps user changes like custom settings).
+   *
+   * @param {string} id object id
+   * @param {ioBroker.SettableObject} obj object definition
+   * @returns {Promise<void>}
+   */
+  async ensureObject(id, obj) {
+    if (this.knownObjects.has(id)) {
+      return;
+    }
+    await this.extendObjectAsync(id, obj);
+    this.knownObjects.add(id);
+  }
+
+  /**
+   * Writes API data as states. Objects follow lib/objects.js, unknown fields of newer
+   * firmware get a generic object. Values are only written when they changed.
+   *
+   * @param {string} base object id of the device or channel
+   * @param {Record<string, unknown>} data API data
+   * @param {Record<string, import('./lib/objects').FieldDef>} fields definitions for this level
+   * @returns {Promise<void>}
+   */
+  async writeFields(base, data, fields) {
+    for (const [key, value] of Object.entries(data)) {
+      if (value == null || IGNORED_KEYS.has(key)) {
+        continue;
+      }
+      if (key === 'deviceSettings' && typeof value === 'object') {
+        await this.ensureObject(`${base}.deviceSettings`, {
+          type: 'channel',
+          common: { name: 'Device settings (change them in the Tedee app)' },
+          native: {},
+        });
+        await this.writeFields(
+          `${base}.deviceSettings`,
+          /** @type {Record<string, unknown>} */ (value),
+          SETTINGS_FIELDS,
+        );
+        continue;
+      }
+      const def = fields[key] || genericField(key, value);
+      if (!def) {
+        continue;
+      }
+      const id = `${base}.${key.replace(this.FORBIDDEN_CHARS, '_')}`;
+      /** @type {ioBroker.StateCommon} */
+      const common = { name: def.name, type: def.type, role: def.role, read: true, write: false };
+      if (def.unit) {
+        common.unit = def.unit;
+      }
+      if (def.states) {
+        common.states = def.states;
+      }
+      await this.ensureObject(id, { type: 'state', common, native: {} });
+      const val = def.convert ? def.convert(value) : /** @type {ioBroker.StateValue} */ (value);
+      await this.setStateChangedAsync(id, val, true);
+    }
+  }
+
+  /**
+   * Writes the data of a lock or keypad and keeps remote.open in sync with the lock state.
+   *
+   * @param {string} id device id
+   * @param {Record<string, unknown>} data data of GET /lock or a webhook
+   * @returns {Promise<void>}
+   */
+  async writeDevice(id, data) {
+    await this.writeFields(id, data, DEVICE_FIELDS);
+    if (typeof data.state === 'number' && this.knownObjects.has(`${id}.remote.open`)) {
+      if (OPEN_STATES.includes(data.state)) {
+        await this.setStateChangedAsync(`${id}.remote.open`, true, true);
+      } else if (data.state === LOCKED_STATE) {
+        await this.setStateChangedAsync(`${id}.remote.open`, false, true);
+      }
+    }
+  }
+
+  /**
+   * Creates the command states of a lock.
+   *
+   * @param {string} id device id
+   * @returns {Promise<void>}
+   */
+  async createRemoteObjects(id) {
+    await this.ensureObject(`${id}.remote`, { type: 'channel', common: { name: 'Commands' }, native: {} });
+    /** @type {Record<string, ioBroker.StateCommon>} */
+    const remotes = {
+      // @KI_HINWEIS: ioBroker role switch.lock means true = open/unlocked, false = locked.
+      // Together with button.open.door this is the "lock" template of the type-detector (Alexa, HomeKit, Material).
+      open: {
+        name: 'Unlock (true) / lock (false)',
+        type: 'boolean',
+        role: 'switch.lock',
+        read: true,
+        write: true,
+      },
+      unlock: {
+        name: 'Unlock with mode',
+        type: 'number',
+        role: 'level',
+        read: true,
+        write: true,
+        def: 0,
+        states: { 0: 'Normal', 2: 'Force', 3: 'Without auto pull spring', 4: 'Unlock or pull spring' },
+      },
+      pull: {
+        name: 'Pull the latch (open the door)',
+        type: 'boolean',
+        role: 'button.open.door',
+        read: false,
+        write: true,
+      },
+      refresh: { name: 'Read the lock data now', type: 'boolean', role: 'button', read: false, write: true },
+    };
+    for (const [command, common] of Object.entries(remotes)) {
+      await this.ensureObject(`${id}.remote.${command}`, { type: 'state', common, native: {} });
+    }
+  }
+
   /**
    * Starts the local webhook server and registers it at the bridge.
    *
@@ -473,16 +605,17 @@ class Tedee extends utils.Adapter {
         this.log.warn(`Invalid webhook payload: ${error}`);
         return;
       }
-      this.handleWebhook(body);
+      this.handleWebhook(body).catch((error) => this.log.warn(`Webhook: ${error.message}`));
     });
   }
 
   /**
    * Processes a webhook event of the bridge.
    *
-   * @param {{ event?: string, data?: { deviceId?: number | string, state?: number, source?: number, user_id?: number } }} body parsed webhook body
+   * @param {{ event?: string, data?: Record<string, unknown> }} body parsed webhook body
+   * @returns {Promise<void>}
    */
-  handleWebhook(body) {
+  async handleWebhook(body) {
     if (this.firstWebhook == null) {
       this.firstWebhook = Date.now();
       this.log.info('Webhook connected successfully');
@@ -490,15 +623,18 @@ class Tedee extends utils.Adapter {
     if (!body || !body.data) {
       return;
     }
-    let deviceId = body.data.deviceId;
-    if (deviceId) {
-      deviceId = deviceId.toString().replace(this.FORBIDDEN_CHARS, '_');
-      this.json2iob.parse(deviceId, body.data, { forceIndex: true, states: this.states });
+    const data = body.data;
+    if (data.deviceId) {
+      const deviceId = String(data.deviceId).replace(this.FORBIDDEN_CHARS, '_');
+      // keypads are not part of GET /lock, they appear with their first webhook (e.g. battery level)
+      const type = Number(data.deviceType);
+      await this.ensureDevice(deviceId, `${DEVICE_TYPES[type] || 'Device'} ${deviceId}`, { type });
+      await this.writeDevice(deviceId, data);
       if (body.event === 'lock-status-changed') {
-        this.handleLastAction(deviceId, body.data).catch((e) => this.log.warn(`lastAction: ${e}`));
+        await this.handleLastAction(deviceId, data).catch((e) => this.log.warn(`lastAction: ${e}`));
       }
     } else {
-      this.json2iob.parse('bridge', body.data, { forceIndex: true });
+      await this.writeFields('bridge', data, BRIDGE_FIELDS);
     }
   }
 
@@ -772,9 +908,10 @@ class Tedee extends utils.Adapter {
     })
       .then(async (res) => {
         this.log.debug(JSON.stringify(res.data));
+        this.setStateChanged('info.connection', true, true);
         for (const device of res.data) {
           const id = device.id.toString().replace(this.FORBIDDEN_CHARS, '_');
-          this.json2iob.parse(id, device, { forceIndex: true, states: this.states });
+          await this.writeDevice(id, device);
         }
         if (this.config.pinManagement) {
           await this.pinManager.updateActive();
@@ -785,6 +922,10 @@ class Tedee extends utils.Adapter {
         if (error.code === 'ECONNRESET') {
           this.log.info('Bridge is busy. Cannot handle more requests');
           return;
+        }
+        if (!error.response) {
+          // bridge not reachable (timeout, network): only a reachable bridge counts as connected
+          this.setStateChanged('info.connection', false, true);
         }
         this.log.warn(error);
         error.response && this.log.warn(JSON.stringify(error.response.data));
@@ -823,83 +964,84 @@ class Tedee extends utils.Adapter {
    * @param {ioBroker.State | null | undefined} state new state, null if deleted
    */
   async onStateChange(id, state) {
-    if (state) {
-      if (!state.ack) {
-        const deviceId = id.split('.')[2];
-        let command = id.split('.')[4];
-        if (id.split('.')[3] === 'pins' && this.config.pinManagement) {
-          await this.pinManager.handleStateChange(deviceId, id.split('.').slice(4));
+    if (!state || state.ack) {
+      return;
+    }
+    const parts = id.split('.');
+    const deviceId = parts[2];
+    if (parts[3] === 'pins') {
+      if (this.config.pinManagement) {
+        await this.pinManager.handleStateChange(deviceId, parts.slice(4));
+      }
+      return;
+    }
+    if (parts[3] !== 'remote') {
+      return;
+    }
+    let command;
+    let mode = 0;
+    switch (parts[4]) {
+      case 'refresh':
+        if (state.val) {
+          await this.updateDevices();
+        }
+        return;
+      case 'open':
+        // switch.lock: true = unlock, false = lock
+        command = state.val ? 'unlock' : 'lock';
+        break;
+      case 'unlock':
+        command = 'unlock';
+        mode = typeof state.val === 'number' ? state.val : Number(state.val) || 0;
+        break;
+      case 'pull':
+        if (!state.val) {
           return;
         }
-        if (id.split('.')[3] !== 'remote') {
-          return;
-        }
-
-        if (command === 'refresh') {
-          this.updateDevices();
-          return;
-        }
-        if (!['lock', 'unlock', 'pull'].includes(command)) {
-          return;
-        }
-        if (state.val === false && command === 'lock') {
-          command = 'unlock';
-        }
-        /** @type {Record<string, string>} */
-        const headers = {
-          accept: '*/*',
-          api_token: this.hashedAPIKey(),
-        };
-        // The "mode" header is only defined for /unlock (0, 2, 3, 4). Other values are rejected with 403.
-        if (command === 'unlock') {
-          const mode = typeof state.val === 'number' ? state.val : 0;
-          if (![0, 2, 3, 4].includes(mode)) {
-            this.log.warn(`Invalid unlock mode ${mode}. Allowed: 0, 2, 3, 4`);
-            return;
-          }
-          if (mode !== 0) {
-            headers.mode = mode.toString();
-          }
-        }
-        const url = `http://${this.config.bridgeip}/${this.apiVersion}/lock/${deviceId}/${command}`;
-        this.log.debug(`Sending url: ${url}`);
-        await this.requestClient({
-          method: 'POST',
-          url: url,
-          headers: headers,
-          // never repeat a lock command automatically, see constructor
-          'axios-retry': { retries: 0 },
-        })
-          .then((res) => {
-            // @KI_HINWEIS: the bridge answers lock commands with 204 and an empty body,
-            // logging res.data at info level only produced a line with "".
-            this.log.info(`Command ${command} sent to lock ${deviceId}`);
-            this.log.debug(`Bridge response ${res.status}: ${JSON.stringify(res.data)}`);
-          })
-          .catch((error) => {
-            this.log.error(error);
-            error.response && this.log.error(JSON.stringify(error.response.data));
-          });
-        this.refreshTimeout && this.clearTimeout(this.refreshTimeout);
-        this.refreshTimeout = this.setTimeout(() => {
-          this.updateDevices();
-        }, 10 * 1000);
-      } else {
-        if (id.split('.')[3] === 'state') {
-          const deviceId = id.split('.')[2];
-          if (state.val === 2 || state.val === 3 || state.val === 7 || state.val === 18) {
-            this.setState(`${deviceId}.remote.lock`, false, true);
-          }
-          if (state.val === 7) {
-            this.setState(`${deviceId}.remote.pull`, true, true);
-          }
-          if (state.val === 6) {
-            this.setState(`${deviceId}.remote.lock`, true, true);
-            this.setState(`${deviceId}.remote.pull`, false, true);
-          }
-        }
+        command = 'pull';
+        break;
+      default:
+        return;
+    }
+    /** @type {Record<string, string>} */
+    const headers = {
+      accept: '*/*',
+      api_token: this.hashedAPIKey(),
+    };
+    // The "mode" header is only defined for /unlock (0, 2, 3, 4). Other values are rejected with 403.
+    if (command === 'unlock') {
+      if (![0, 2, 3, 4].includes(mode)) {
+        this.log.warn(`Invalid unlock mode ${mode}. Allowed: 0, 2, 3, 4`);
+        return;
+      }
+      if (mode !== 0) {
+        headers.mode = mode.toString();
       }
     }
+    const url = `http://${this.config.bridgeip}/${this.apiVersion}/lock/${deviceId}/${command}`;
+    this.log.debug(`Sending url: ${url}`);
+    await this.requestClient({
+      method: 'POST',
+      url: url,
+      headers: headers,
+      // never repeat a lock command automatically, see constructor
+      'axios-retry': { retries: 0 },
+    })
+      .then((res) => {
+        // @KI_HINWEIS: the bridge answers lock commands with 204 and an empty body,
+        // logging res.data at info level only produced a line with "".
+        this.log.info(`Command ${command} sent to lock ${deviceId}`);
+        this.log.debug(`Bridge response ${res.status}: ${JSON.stringify(res.data)}`);
+      })
+      .catch((error) => {
+        this.log.error(error);
+        error.response && this.log.error(JSON.stringify(error.response.data));
+      });
+    // the result arrives by webhook, the poll is only a backup if a webhook got lost
+    this.refreshTimeout && this.clearTimeout(this.refreshTimeout);
+    this.refreshTimeout = this.setTimeout(() => {
+      this.updateDevices();
+    }, 10 * 1000);
   }
 }
 
