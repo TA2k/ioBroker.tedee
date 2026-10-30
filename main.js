@@ -351,8 +351,19 @@ class Tedee extends utils.Adapter {
       const id = fullId.substring(prefix.length);
       const parts = id.split('.');
       if (parts.length === 1 && obj.type === 'channel' && id !== 'info') {
-        // @KI_HINWEIS: up to 0.4.x json2iob turned the lock/bridge objects into channels without name
-        await this.extendObjectAsync(id, { type: 'device' });
+        // @KI_HINWEIS: up to 0.4.x json2iob turned the lock/bridge objects into channels without name.
+        // Keypads only exist from webhooks, their name comes from the old deviceType state.
+        const typeState = await this.getStateAsync(`${id}.deviceType`).catch(() => null);
+        const type = typeState ? Number(typeState.val) : NaN;
+        const name = obj.common && obj.common.name ? obj.common.name : `${DEVICE_TYPES[type] || 'Device'} ${id}`;
+        await this.extendObjectAsync(id, { type: 'device', common: { name } });
+      }
+      // apply roles, names and units to states of 0.4.x right away (keypads may not send data for days)
+      if (parts.length === 2 && obj.type === 'state') {
+        const def = (parts[0] === 'bridge' ? BRIDGE_FIELDS : DEVICE_FIELDS)[parts[1]];
+        if (def) {
+          await this.extendObjectAsync(id, { common: this.fieldCommon(def) });
+        }
       }
       const sub = parts.slice(1).join('.');
       if (parts.length > 1 && OBSOLETE_STATES.includes(sub)) {
@@ -438,18 +449,28 @@ class Tedee extends utils.Adapter {
         continue;
       }
       const id = `${base}.${key.replace(this.FORBIDDEN_CHARS, '_')}`;
-      /** @type {ioBroker.StateCommon} */
-      const common = { name: def.name, type: def.type, role: def.role, read: true, write: false };
-      if (def.unit) {
-        common.unit = def.unit;
-      }
-      if (def.states) {
-        common.states = def.states;
-      }
-      await this.ensureObject(id, { type: 'state', common, native: {} });
+      await this.ensureObject(id, { type: 'state', common: this.fieldCommon(def), native: {} });
       const val = def.convert ? def.convert(value) : /** @type {ioBroker.StateValue} */ (value);
       await this.setStateChangedAsync(id, val, true);
     }
+  }
+
+  /**
+   * Builds common of a read-only state from a field definition.
+   *
+   * @param {import('./lib/objects').FieldDef} def field definition
+   * @returns {ioBroker.StateCommon} common
+   */
+  fieldCommon(def) {
+    /** @type {ioBroker.StateCommon} */
+    const common = { name: def.name, type: def.type, role: def.role, read: true, write: false };
+    if (def.unit) {
+      common.unit = def.unit;
+    }
+    if (def.states) {
+      common.states = def.states;
+    }
+    return common;
   }
 
   /**
