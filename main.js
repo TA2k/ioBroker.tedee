@@ -83,11 +83,13 @@ class Tedee extends utils.Adapter {
      * @type {Record<number, string>}
      */
     this.actionSources = {
-      1: 'Button / manual',
+      0: 'Manual (turned by hand)',
+      1: 'Button',
       2: 'App / cloud API',
       7: 'Auto pull spring',
       10: 'Keypad',
       18: 'Local Bridge API (e.g. ioBroker)',
+      20: 'Auto pull spring (local Bridge API)',
       22: 'Keypad (pull spring)',
       23: 'Fingerprint',
       24: 'Fingerprint (pull spring)',
@@ -102,6 +104,8 @@ class Tedee extends utils.Adapter {
     this.pinCache = {};
     /** @type {Record<string, number>} time of the last lastAction update per lock */
     this.lastActionTime = {};
+    /** @type {Record<string, number>} last lock state reported by a webhook, per lock */
+    this.lastLockState = {};
     this.states = {
       state: {
         0: 'Uncalibrated',
@@ -612,6 +616,8 @@ class Tedee extends utils.Adapter {
    * Updates lastAction.* from a lock-status-changed webhook.
    * Only the first event of an operation is used (4 = opening, 5 = closing, 8 = pulling
    * without a preceding unlock), so the following pull events do not overwrite the source.
+   * Turning the knob by hand (source 0) has no motor states 4/5/8, the lock reports the
+   * end state directly: 6 = locked, 2 = unlocked, 7 = pulled.
    *
    * @param {string} id device id
    * @param {{state?: number, source?: number, user_id?: number}} data webhook data
@@ -623,6 +629,8 @@ class Tedee extends utils.Adapter {
     }
     const now = Date.now();
     const recent = now - (this.lastActionTime[id] || 0) < 15 * 1000;
+    const previous = this.lastLockState[id];
+    this.lastLockState[id] = data.state;
     let action = null;
     if (data.state === 4) {
       action = 'unlock';
@@ -630,6 +638,16 @@ class Tedee extends utils.Adapter {
       action = 'lock';
     } else if (data.state === 8 && !recent) {
       action = 'pull';
+    } else if (Number(data.source) === 0 && data.state !== previous) {
+      // @KI_HINWEIS: manual operation, determined on a Lock PRO (FW 2.4.48154). 2 after a pull (7)
+      // is the spring returning, not an unlock; 3 (partially open) is only an intermediate state.
+      if (data.state === 6) {
+        action = 'lock';
+      } else if (data.state === 2 && previous !== 7 && previous !== 8) {
+        action = 'unlock';
+      } else if (data.state === 7) {
+        action = 'pull';
+      }
     }
     if (!action) {
       return;
@@ -853,7 +871,7 @@ class Tedee extends utils.Adapter {
           'axios-retry': { retries: 0 },
         })
           .then((res) => {
-            // @KI_HINWEIS: the bridge answers lock commands with 202 and an empty body,
+            // @KI_HINWEIS: the bridge answers lock commands with 204 and an empty body,
             // logging res.data at info level only produced a line with "".
             this.log.info(`Command ${command} sent to lock ${deviceId}`);
             this.log.debug(`Bridge response ${res.status}: ${JSON.stringify(res.data)}`);

@@ -72,13 +72,26 @@ Unlock modes:
 
 Each lock gets a channel `tedee.0.<lockId>.lastAction`, filled by the webhooks:
 
-| State        | Content                                                                         |
-| ------------ | ------------------------------------------------------------------------------- |
-| `action`     | `unlock`, `lock` or `pull`. Written last, use it as trigger in scripts          |
-| `source`     | how: 1 = Button / manual, 2 = App, 10 = Keypad, 18 = ioBroker, 23 = Fingerprint |
-| `sourceName` | text of `source`                                                                |
-| `userId`     | Tedee user id (app), PIN id (keypad) or fingerprint id; empty if unknown        |
-| `pinAlias`   | name of the PIN for keypad actions (Bridge API 1.19+, loaded from the lock)     |
+| State        | Content                                                                     |
+| ------------ | --------------------------------------------------------------------------- |
+| `action`     | `unlock`, `lock` or `pull`. Written last, use it as trigger in scripts      |
+| `source`     | how, see table below                                                        |
+| `sourceName` | text of `source`                                                            |
+| `userId`     | Tedee user id (app), PIN id (keypad) or fingerprint id; empty if unknown    |
+| `pinAlias`   | name of the PIN for keypad actions (Bridge API 1.19+, loaded from the lock) |
+
+| `source` | Meaning                                                     |
+| -------- | ----------------------------------------------------------- |
+| 0        | turned by hand (knob or key)                                |
+| 1        | button on the lock                                          |
+| 2        | Tedee app (`userId` = Tedee user)                           |
+| 7        | auto pull spring after app or button                        |
+| 10       | keypad (`userId` = PIN id, empty = lock button without PIN) |
+| 18       | local Bridge API, e.g. ioBroker `remote.*`                  |
+| 20       | auto pull spring after a local Bridge API command           |
+| 22       | auto pull spring after keypad                               |
+| 23       | fingerprint (`userId` = finger id)                          |
+| 24       | auto pull spring after fingerprint                          |
 
 The `source` values are not documented by Tedee and were determined with a Lock PRO and Keypad PRO. Unknown values are shown as `Unknown (n)`, please report them.
 
@@ -227,7 +240,8 @@ The blocks generate the same code as the JavaScript example above, e.g. `sendTo(
 ### **WORK IN PROGRESS**
 
 - (Schimi1983) Fix: lock commands logged an empty line `""`, now `Command lock sent to lock <id>`
-- (Schimi1983) `lastAction.source` 18 = command via the local Bridge API (e.g. ioBroker)
+- (Schimi1983) `lastAction.source` 18 = command via the local Bridge API (e.g. ioBroker), 20 = auto pull after such a command
+- (Schimi1983) `lastAction` also shows locks, unlocks and pulls by hand (source 0), source 1 is now "Button" only
 
 ### 0.4.1 (2026-10-29)
 
