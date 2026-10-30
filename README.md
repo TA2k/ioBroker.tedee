@@ -37,36 +37,55 @@ By default the first IPv4 address of the ioBroker system is used. Set **Callback
 
 Only webhooks pointing to this ioBroker system are removed on start/stop, webhooks of other systems (e.g. Home Assistant) are kept.
 
-Current State of a lock:
-tedee.0.id.state
+## Objects
 
-- 0 Uncalibrated
-- 1 Calibrating
-- 2 Unlocked
-- 3 SemiLocked
-- 4 Unlocking
-- 5 Locking
-- 6 Locked
-- 7 Pulled
-- 8 Pulling
-- 9 Unknown
-- 18 Updating
-- 255 Unpulling
+Each lock is a device `tedee.0.<lockId>` (name from the Tedee app). Roles follow the [ioBroker state roles](https://github.com/ioBroker/ioBroker.docs/blob/master/docs/en/dev/stateroles.md), so the lock is detected as a lock by the type-detector (devices adapter, Material, Alexa, HomeKit).
+
+| State                                     | Role                  | Content                                                                       |
+| ----------------------------------------- | --------------------- | ----------------------------------------------------------------------------- |
+| `state`                                   | `value.lock`          | lock state, see below                                                         |
+| `batteryLevel`                            | `value.battery`       | battery in %                                                                  |
+| `isCharging`                              | `indicator`           | battery is charging                                                           |
+| `isConnected`                             | `indicator.reachable` | lock is connected to the bridge                                               |
+| `jammed`                                  | `indicator.error`     | lock is jammed                                                                |
+| `rssi`                                    | `value.rssi`          | signal strength in dBm                                                        |
+| `doorState`                               | `value`               | door sensor: 0 not paired, 1 disconnected, 2 opened, 3 closed, 4 uncalibrated |
+| `version`, `serialNumber`, `name`, `type` | `info.*` / `value`    | firmware, serial number, name, device type                                    |
+| `deviceSettings.*`                        | `indicator` / `value` | settings of the lock (read only, change them in the Tedee app)                |
+
+Lock states (`state`): 0 Uncalibrated, 1 Calibrating, 2 Unlocked, 3 Semi locked, 4 Unlocking, 5 Locking, 6 Locked, 7 Pulled, 8 Pulling, 9 Unknown, 18 Updating, 255 Unpulling
+
+The bridge is the device `tedee.0.bridge` (`isConnected` = connected to the Tedee cloud). Keypads appear as device with their first event (e.g. battery level).
 
 ## Usage
 
-You can control the tedee lock via tedee.0.id.remote
+Commands in `tedee.0.<lockId>.remote`:
 
-- lock to Lock/Unlock
-- pull to Pull
-- unlock unlock
+| State     | Role               | Write                                                       |
+| --------- | ------------------ | ----------------------------------------------------------- |
+| `open`    | `switch.lock`      | `true` = unlock, `false` = lock. Shows the current position |
+| `unlock`  | `level`            | unlock with mode (see below)                                |
+| `pull`    | `button.open.door` | `true` = pull the latch (open the door)                     |
+| `refresh` | `button`           | `true` = read the lock data now                             |
 
 Unlock modes:
 
-- 0 - (or no parameter set) - Normal. From close position: unlock only or unlock with auto pull if enabled. From open position: nothing.
+- 0 - Normal. From close position: unlock only or unlock with auto pull if enabled. From open position: nothing.
 - 2 - Force. Force movement until lock hits resistance.
 - 3 - Without Pull. From close position: unlock only without auto pull. From open position: nothing.
 - 4 - Unlock or Pull. From close position: unlock only or unlock with auto pull if enabled. From open position: pull.
+
+### Changes in 1.0.0 (please adapt your scripts)
+
+| Before (0.4.x)                                                          | Now                                                               |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `remote.lock` `true` = lock                                             | `remote.open` `false` = lock, `true` = unlock (ioBroker standard) |
+| `remote.lock` `false` = unlock                                          | `remote.open` `true`                                              |
+| `remote.pull`, `remote.refresh` switch                                  | buttons, only `true` triggers                                     |
+| `isConnected`, `jammed`, `isCharging`, `deviceSettings.*Enabled` as 0/1 | `true` / `false`                                                  |
+| root states `source`, `user_id` (raw webhook)                           | removed, use the channel `lastAction`                             |
+
+`remote.lock` is deleted on the first start of 1.0.0, a warning in the log shows the new state. Scripts that still write `remote.lock` fail instead of operating the lock the wrong way round.
 
 ## Last action (who opened the door)
 
@@ -236,6 +255,15 @@ The blocks generate the same code as the JavaScript example above, e.g. `sendTo(
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+
+### **WORK IN PROGRESS**
+
+- (Schimi1983) Breaking: `remote.lock` replaced by `remote.open` with the ioBroker role `switch.lock` (`true` = unlock, `false` = lock), see "Changes in 1.0.0"
+- (Schimi1983) All states get ioBroker roles, units and names (battery, signal strength, reachable, jammed, firmware ...), 0/1 values are booleans now
+- (Schimi1983) Locks, keypads and the bridge are devices, the lock is detected by the type-detector (Alexa, HomeKit, Material)
+- (Schimi1983) `remote.pull` and `remote.refresh` are buttons, `info.connection` shows whether the bridge is reachable
+- (Schimi1983) json2iob removed, states are only written when they change
+
 ### 0.4.2 (2026-10-30)
 
 - (Schimi1983) Fix: lock commands logged an empty line `""`, now `Command lock sent to lock <id>`
