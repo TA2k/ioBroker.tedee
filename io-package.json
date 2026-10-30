@@ -2,8 +2,21 @@
   "common": {
     "tier": 2,
     "name": "tedee",
-    "version": "0.4.1",
+    "version": "0.4.2",
     "news": {
+      "0.4.2": {
+        "en": "Fix: lock commands logged an empty line `\"\"`, now `Command lock sent to lock <id>`\n`lastAction.source` 18 = command via the local Bridge API (e.g. ioBroker), 20 = auto pull after such a command\n`lastAction` also shows locks, unlocks and pulls by hand (source 0), source 1 is now \"Button\" only",
+        "de": "<id>Fix: Sperrbefehle loggte eine Leerzeile, jetzt `Command Lock an Lock`\n`LastAction.Source` 18 = Befehl über die lokale Bridge API (z. B. ioBroker), 20 = Autopull nach so einem Befehl\n`LastAction` sperrt, entriegelt und zieht auch von Hand (Quelle 0), Quelle 1 ist jetzt nur „Button“",
+        "ru": "<id>Исправлено: команды блокировки регистрировали пустую строку `\"\"`, теперь `Командная блокировка отправлена в блокировку `\n`LastAction.Source` 18 = команда через локальный API Bridge (например, IOBroker), 20 = автоматическое извлечение данных после выполнения такой команды\n`LastAction` также показывает блокировки, разблокировки и вытягивания вручную (источник 0), исходный код 1 теперь только «Кнопка»",
+        "pt": "<id>Correção: o comando lock registrava uma linha vazia, agora o comando lock\n`lastAction.source` 18 = comando via API Bridge local (ex: IOBroker), 20 = auto pull após tal comando\n`LastAction` também bloqueia e puxa à mão (fonte 0), agora a fonte 1 é só “Botão”",
+        "nl": "<id>Fix: bij vergrendelingsopdrachten werd een lege regel geregistreerd met `\"`, nu werd `Commandovergrendeling naar slot gestuurd `\n`LastAction.source` 18 = opdracht via de lokale Bridge API (bijvoorbeeld IOBroker), 20 = automatisch ophalen na zo'n opdracht\n`LastAction` toont ook vergrendelingen, ontgrendelt en trekt met de hand (bron 0), bron 1 is nu alleen nog „Knop”",
+        "fr": "<id>Correctif : une ligne vide a été enregistrée, maintenant « Le verrou a été envoyé au verrou »\n`LastAction.source` 18 = commande via l'API Bridge locale (par exemple IOBroker), 20 = extraction automatique\n« LastAction » permet aussi de verrouiller, déverrouiller et tirer à la main (source 0), la source 1 étant « Button »",
+        "it": "<id>Correzione: i comandi di blocco erano vuoti, ora `Lock inviato a blocco`\n`lastAction.source` 18 = comando tramite l'API Bridge locale (es. IOBroker), 20 = auto pull dopo tale comando\n`LastAzione` mostra anche blocchi, sblocca e tira a mano (fonte 0), fonte 1 ora è solo «Button»",
+        "es": "<id>Corrección: bloquear comandos registraba una línea vacía, ahora `Bloqueo de comando enviado a bloquear`\n`LastAction.Source` 18 = comando mediante la API Bridge local (p. ej. IOBroker), 20 = extracción automática tras ese comando\n`LastAction` también muestra bloqueos y tirones a mano (fuente 0), la fuente 1 ahora solo es «botón»",
+        "pl": "<id>Poprawka: polecenia blokady zarejestrowały pusty wiersz `\"\"`, teraz `Blokada poleceń wysłana do blokady `\n`LastAction.source` 18 = polecenie za pośrednictwem lokalnego interfejsu API Bridge (np. ioBroker), 20 = automatyczne ciągnięcie po takim poleceniu\n`LastAction` pokazuje również blokady, odblokowania i ciągnięcia ręcznie (źródło 0), źródło 1 jest teraz tylko „Przycisk”",
+        "uk": "<id>Виправлено: команди блокування реєстрували порожній рядок `\"\"`, тепер `Блокування команд відправлено до блокування `\n`lastAction.source` 18 = команда через локальний API Bridge (наприклад, IObroker), 20 = автоматичне витягування після такої команди\n`LastAction` також показує блокування, розблокування та витягування вручну (джерело 0), джерело 1 тепер лише «Кнопка»",
+        "zh-cn": "<id>修复：锁定命令记录了一个空行 “”，现在 “命令锁定已发送到锁定”\n`lastAction.Source` 18 = 通过本地 Bridge API（例如 IOBroker）执行命令，20 = 在这样的命令之后自动拉出\n`lastAction` 还显示手动锁定、解锁和拉动（来源 0），来源 1 现在只有 “按钮”"
+      },
       "0.4.1": {
         "en": "Repository checker findings fixed: Node.js 24 for lint and deploy, placeholder translation, Dependabot added [#52]\nWebhook server uses the built-in Node.js HTTP server, express and body-parser removed (52 packages less)\nDependencies updated (security fix for node-forge)",
         "de": "Repository-Checker behoben: Node.js 24 für Lint und Deploy, Platzhalter, Dependabot hinzugefügt [#52]\nWebhook nutzt den Node.js HTTP-Server, ohne Express und Body-Parser (52 Pakete weniger)\nAbhängigkeiten aktualisiert (Node-Forge behoben)",

@@ -236,8 +236,7 @@ The blocks generate the same code as the JavaScript example above, e.g. `sendTo(
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-
-### **WORK IN PROGRESS**
+### 0.4.2 (2026-10-30)
 
 - (Schimi1983) Fix: lock commands logged an empty line `""`, now `Command lock sent to lock <id>`
 - (Schimi1983) `lastAction.source` 18 = command via the local Bridge API (e.g. ioBroker), 20 = auto pull after such a command
