@@ -2,8 +2,21 @@
   "common": {
     "tier": 2,
     "name": "tedee",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "news": {
+      "1.0.1": {
+        "en": "README and instance settings rewritten for beginners: setup in 3 steps, daily use, troubleshooting; technical details collapsed, smaller logo",
+        "de": "README und Instanzeinstellungen für Anfänger: Einrichtung in 3 Schritten, Alltag, Fehlersuche; technische Daten eingeklappt, kleineres Logo",
+        "ru": "Настройки README и экземпляра, переписанные для новичков: настройка за 3 шага, ежедневное использование, устранение неполадок; технические детали сжаты, логотип уменьшен",
+        "pt": "Readme e instâncias reescritas para iniciantes: 3 etapas, uso diário, solução de problemas; detalhes técnicos resumidos, logo menor",
+        "nl": "README- en instantie-instellingen herschreven voor beginners: installatie in 3 stappen, dagelijks gebruik, probleemoplossing; technische gegevens samengevouwen, kleiner logo",
+        "fr": "README et paramètres d'instance réécrits pour les débutants : configuration en 3 étapes, usage quotidien, dépannage ; détails techniques réduits, logo réduit",
+        "it": "README e impostazioni delle istanze riscritte per principianti: 3 fasi, uso quotidiano, risoluzione problemi; dettagli tecnici ridotti",
+        "es": "README y la configuración de instancia reescritos para principiantes: configuración en 3 pasos, uso diario, solución de problemas; detalles técnicos doblados, logotipo más pequeño",
+        "pl": "README i ustawienia instancji przepisane dla początkujących: konfiguracja w 3 krokach, codzienne użytkowanie, rozwiązywanie problemów; zawinięte szczegóły techniczne, mniejsze logo",
+        "uk": "README та налаштування екземпляра, переписані для початківців: налаштування в 3 кроки, щоденне використання, усунення несправностей; технічні деталі згорнуті, менший логотип",
+        "zh-cn": "为初学者重写了自述文件和实例设置：分三步完成设置、日常使用、故障排除；技术细节折叠，徽标变小"
+      },
       "1.0.0": {
         "en": "Breaking: `remote.lock` replaced by `remote.open` with the ioBroker role `switch.lock` (`true` = unlock, `false` = lock), see \"Changes in 1.0.0\"\nAll states get ioBroker roles, units and names (battery, signal strength, reachable, jammed, firmware ...), 0/1 values are booleans now\nLocks, keypads and the bridge are devices, the lock is detected by the type-detector (Alexa, HomeKit, Material)\n`remote.pull` and `remote.refresh` are buttons, `info.connection` shows whether the bridge is reachable\njson2iob removed, states are only written when they change",
         "de": "Inkompatibel: `remote.lock` ersetzt durch `remote.open` mit der ioBroker-Rolle `switch.lock` (`true` = entriegeln, `false` = verriegeln), siehe „Changes in 1.0.0“ in der Readme\nAlle States haben ioBroker-Rollen, Einheiten und Namen (Akku, Signalstärke, erreichbar, blockiert, Firmware …), 0/1-Werte sind jetzt true/false\nSchlösser, Keypads und die Bridge sind Geräte, das Schloss wird vom Type-Detector erkannt (Alexa, HomeKit, Material)\n`remote.pull` und `remote.refresh` sind Buttons, `info.connection` zeigt, ob die Bridge erreichbar ist\njson2iob entfernt, States werden nur bei Änderung geschrieben",
