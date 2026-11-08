@@ -14,6 +14,7 @@ const http = require('node:http');
 const { setTimeout: wait } = require('node:timers/promises');
 const axiosRetry = require('axios-retry').default;
 const { PinManager, PinError } = require('./lib/pinManager');
+const { RequestQueue } = require('./lib/requestQueue');
 const {
   DEVICE_FIELDS,
   SETTINGS_FIELDS,
@@ -49,7 +50,7 @@ class Tedee extends utils.Adapter {
     /** @type {Set<string>} objects created/updated in this adapter run */
     this.knownObjects = new Set();
 
-    this.requestClient = axios.create({
+    this.httpClient = axios.create({
       withCredentials: true,
       headers: { 'user-agent': this.userAgent },
       timeout: 3 * 60 * 1000, //3min client timeout
@@ -64,11 +65,16 @@ class Tedee extends utils.Adapter {
     // the 'axios-retry' request option. A 405/406 or a socket reset after a command
     // does not prove the motor did not move, so repeating it could unlock a door twice.
 
-    axiosRetry(this.requestClient, {
+    axiosRetry(this.httpClient, {
       retries: 3,
-      retryDelay: axiosRetry.exponentialDelay,
+      // 503 = bridge busy, it asks for "Retry-After: 1"
+      retryDelay: (retryCount, error) =>
+        error.response && error.response.status === 503 ? 1000 : axiosRetry.exponentialDelay(retryCount, error),
       onRetry: (retryCount, err, cfg) => {
-        if (err.response) {
+        if (err.response && err.response.status === 503) {
+          // bridge busy (e.g. Tedee app or another system), normal operation
+          this.log.debug(`Bridge busy, retrying ${cfg.url} in 1 s`);
+        } else if (err.response) {
           this.log.warn(`Retrying request to ${cfg.url} after ${err.response.status} ${err.response.statusText}`);
         } else {
           this.log.warn(`Retrying request to ${cfg.url} after ${err.code}`);
@@ -84,6 +90,20 @@ class Tedee extends utils.Adapter {
         );
       },
     });
+    // @KI_HINWEIS: the bridge handles one request at a time and rejects parallel connections
+    // with 503. All requests (polling, commands, PINs, webhooks) go through one queue,
+    // commands (config.priority) are served first.
+    this.requestQueue = new RequestQueue();
+    /**
+     * Sends a request to the bridge through the request queue.
+     *
+     * @param {import('axios').AxiosRequestConfig & { priority?: boolean }} config request
+     * @returns {Promise<import('axios').AxiosResponse>} response
+     */
+    this.requestClient = (config) => {
+      const { priority, ...request } = config;
+      return this.requestQueue.run(() => this.httpClient(request), priority);
+    };
     this.updateTimeout = null;
     this.isUnloading = false;
     this.pinManager = new PinManager(this);
@@ -564,6 +584,8 @@ class Tedee extends utils.Adapter {
     await this.requestClient({
       method: 'post',
       url: `http://${this.config.bridgeip}/${this.apiVersion}/callback`,
+      // webhook (un)registration also runs on stop, it must not wait behind a long PIN list
+      priority: true,
       headers: {
         accept: '*/*',
         api_token: this.hashedAPIKey(),
@@ -695,6 +717,8 @@ class Tedee extends utils.Adapter {
     await this.requestClient({
       method: 'get',
       url: `http://${this.config.bridgeip}/${this.apiVersion}/callback`,
+      // webhook (un)registration also runs on stop, it must not wait behind a long PIN list
+      priority: true,
       headers: {
         accept: '*/*',
         api_token: this.hashedAPIKey(),
@@ -713,6 +737,7 @@ class Tedee extends utils.Adapter {
           await this.requestClient({
             method: 'delete',
             url: `http://${this.config.bridgeip}/${this.apiVersion}/callback/${webhook.id}`,
+            priority: true,
             headers: {
               accept: '*/*',
               api_token: this.hashedAPIKey(),
@@ -1045,8 +1070,15 @@ class Tedee extends utils.Adapter {
       method: 'POST',
       url: url,
       headers: headers,
-      // never repeat a lock command automatically, see constructor
-      'axios-retry': { retries: 0 },
+      priority: true,
+      // @KI_HINWEIS: a lock command is only repeated after 503: the bridge rejected the
+      // connection before reading the request, so the lock did not move. Any other error
+      // (405, 406, reset, timeout) does not prove that, see constructor.
+      'axios-retry': {
+        retries: 3,
+        retryCondition: (error) => !!error.response && error.response.status === 503,
+        retryDelay: () => 1000,
+      },
     })
       .then((res) => {
         // @KI_HINWEIS: the bridge answers lock commands with 204 and an empty body,
