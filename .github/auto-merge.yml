@@ -1,0 +1,10 @@
+# Dependabot PRs that are merged automatically when all tests pass.
+# Major updates and patch/minor updates of production dependencies outside these rules stay manual.
+- match:
+    # production dependencies: only patch updates
+    dependency_type: production
+    update_type: 'semver:patch'
+- match:
+    # development dependencies (lint, tests, release tools): patch and minor updates
+    dependency_type: development
+    update_type: 'semver:minor'
