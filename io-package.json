@@ -6,7 +6,7 @@
     "news": {
       "1.0.2": {
         "en": "Fix: requests to the bridge are sent one after another (the bridge rejects parallel connections), lock commands are served first\nFix: lock commands and PIN changes are repeated when the bridge is busy (503), so they are no longer lost",
-        "de": "Fix: Anfragen an die Bridge kommen nacheinander (sie lehnt Parallelverbindungen ab), zuerst kommen Sperrbefehle\nFix: Sperr- und PIN-Änderungen wiederholen sich, wenn die Bridge besetzt ist (503)",
+        "de": "Fix: Anfragen an die Bridge laufen nacheinander (die Bridge lehnt parallele Verbindungen ab), Schließbefehle haben Vorrang\nFix: Schließbefehle und PIN-Änderungen werden wiederholt, wenn die Bridge beschäftigt ist (503), und gehen nicht mehr verloren",
         "ru": "Исправление: запросы к мосту отправляются один за другим (мост отклоняет параллельные соединения), команды блокировки подаются первыми\nИсправление: команды блокировки и изменения PIN-кода повторяются, когда мост занят (503), поэтому они больше не теряются",
         "pt": "Correção: os pedidos à ponte são enviados um após o outro (a ponte rejeita conexões paralelas) e os comandos lock\nCorreção: comandos de bloqueio e PIN se repetem quando a ponte está ocupada (503) e não são perdidos",
         "nl": "Oplossing: aanvragen naar de bridge worden één voor één verzonden (de bridge wijst parallelle verbindingen af), vergrendelingsopdrachten worden eerst uitgevoerd\nFix: vergrendelingsopdrachten en pincodewijzigingen worden herhaald wanneer de bridge bezet is (503), zodat ze niet langer verloren gaan",
