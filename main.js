@@ -15,6 +15,7 @@ const { setTimeout: wait } = require('node:timers/promises');
 const axiosRetry = require('axios-retry').default;
 const { PinManager, PinError } = require('./lib/pinManager');
 const { RequestQueue } = require('./lib/requestQueue');
+const { isUnreachable } = require('./lib/bridgeStatus');
 const {
   DEVICE_FIELDS,
   SETTINGS_FIELDS,
@@ -76,6 +77,9 @@ class Tedee extends utils.Adapter {
           this.log.debug(`Bridge busy, retrying ${cfg.url} in 1 s`);
         } else if (err.response) {
           this.log.warn(`Retrying request to ${cfg.url} after ${err.response.status} ${err.response.statusText}`);
+        } else if (isUnreachable(err)) {
+          // reported once by setBridgeReachable(), not for every retry
+          this.log.debug(`Retrying request to ${cfg.url} after ${err.code}`);
         } else {
           this.log.warn(`Retrying request to ${cfg.url} after ${err.code}`);
         }
@@ -102,8 +106,25 @@ class Tedee extends utils.Adapter {
      */
     this.requestClient = (config) => {
       const { priority, ...request } = config;
-      return this.requestQueue.run(() => this.httpClient(request), priority);
+      return this.requestQueue
+        .run(() => this.httpClient(request), priority)
+        .then(
+          (res) => {
+            this.setBridgeReachable(true);
+            return res;
+          },
+          (error) => {
+            if (isUnreachable(error)) {
+              this.setBridgeReachable(false, error);
+            }
+            throw error;
+          },
+        );
     };
+    /** @type {boolean | null} null = not known yet */
+    this.bridgeReachable = null;
+    /** @type {Promise<void> | null} running recovery after the bridge was unreachable */
+    this.recovering = null;
     this.updateTimeout = null;
     this.isUnloading = false;
     this.pinManager = new PinManager(this);
@@ -304,15 +325,15 @@ class Tedee extends utils.Adapter {
       },
     })
       .then(async (res) => {
-        this.setState('info.connection', true, true);
         this.log.debug(JSON.stringify(res.data));
         await this.ensureDevice('bridge', res.data.name || 'Bridge', {}, true);
         await this.writeFields('bridge', res.data, BRIDGE_FIELDS);
       })
-      .catch((error) => {
-        this.log.error(error);
-        error.response && this.log.error(JSON.stringify(error.response.data));
-      });
+      .catch((error) => this.logRequestError(error, 'Bridge info'));
+    if (this.bridgeReachable === false) {
+      // the lock list would fail the same way, getDeviceList() runs again when the bridge is back
+      return;
+    }
     await this.requestClient({
       method: 'get',
       url: `http://${this.config.bridgeip}/${this.apiVersion}/lock`,
@@ -347,10 +368,7 @@ class Tedee extends utils.Adapter {
           await this.writeDevice(id, device);
         }
       })
-      .catch((error) => {
-        this.log.error(error);
-        error.response && this.log.error(JSON.stringify(error.response.data));
-      });
+      .catch((error) => this.logRequestError(error, 'Lock list'));
   }
 
   /**
@@ -576,8 +594,24 @@ class Tedee extends utils.Adapter {
     this.webhookServer.listen(port, () => {
       this.log.info(`Webhooks listening on port ${port} (IPv4 + IPv6)`);
     });
+    this.webhookPort = port;
+    await this.registerWebhook();
+  }
+
+  /**
+   * Removes old registrations of this adapter and registers the webhook at the bridge.
+   *
+   * @returns {Promise<void>}
+   */
+  async registerWebhook() {
+    const host = this.callbackHost;
+    const port = this.webhookPort;
     //receive list of webhooks
     await this.cleanWebhooks();
+    if (this.bridgeReachable === false) {
+      // registerWebhook() runs again when the bridge is back
+      return;
+    }
     await this.sleep(1500);
     //register webhook
     this.log.info(`Registering webhook ` + `http://${host}:${port}/webhook`);
@@ -601,9 +635,12 @@ class Tedee extends utils.Adapter {
         this.log.info('Webhook registered');
       })
       .catch((error) => {
+        if (isUnreachable(error)) {
+          // already reported, registered again when the bridge is back
+          return;
+        }
         this.log.error("Couldn't register webhook. Please try to restart the adapter.");
-        this.log.error(error);
-        error.response && this.log.error(JSON.stringify(error.response.data));
+        this.logRequestError(error, 'Webhook registration');
       });
   }
 
@@ -747,16 +784,10 @@ class Tedee extends utils.Adapter {
               this.log.debug(JSON.stringify(res.data));
               this.log.info('Webhook deleted');
             })
-            .catch((error) => {
-              this.log.error(error);
-              error.response && this.log.error(JSON.stringify(error.response.data));
-            });
+            .catch((error) => this.logRequestError(error, 'Delete webhook'));
         }
       })
-      .catch((error) => {
-        this.log.error(error);
-        error.response && this.log.error(JSON.stringify(error.response.data));
-      });
+      .catch((error) => this.logRequestError(error, 'Webhook list'));
   }
   /**
    * Creates the lastAction channel of a lock.
@@ -929,6 +960,78 @@ class Tedee extends utils.Adapter {
     await cache.loading;
   }
 
+  /**
+   * Tracks whether the bridge answers and reports changes once instead of on every request.
+   *
+   * @param {boolean} reachable true: the bridge answered a request
+   * @param {{ code?: string }} [error] network error if not reachable
+   */
+  setBridgeReachable(reachable, error) {
+    const before = this.bridgeReachable;
+    this.bridgeReachable = reachable;
+    this.setStateChanged('info.connection', reachable, true);
+    if (reachable) {
+      if (before === false && !this.isUnloading) {
+        this.log.info(`Bridge ${this.config.bridgeip} is reachable again`);
+        this.onBridgeBack();
+      }
+      return;
+    }
+    if (before !== false && !this.isUnloading) {
+      // @KI_HINWEIS: one clear message instead of a warning per retry. Typical cause in the
+      // forum: the router gave the bridge a new IP address, the adapter still uses the old one.
+      this.log.error(
+        `Bridge not reachable at ${this.config.bridgeip} (${(error && error.code) || 'no answer'}). ` +
+          'Please check the IP address in the instance settings (best: give the bridge a fixed IP address in your router), ' +
+          'that the bridge is powered and in the WiFi, and that the local API is enabled in the Tedee app. ' +
+          'The adapter keeps trying.',
+      );
+    }
+  }
+
+  /**
+   * Catches up on what failed while the bridge was unreachable: device list, webhook, PINs.
+   */
+  onBridgeBack() {
+    if (this.recovering) {
+      return;
+    }
+    this.recovering = (async () => {
+      if (this.deviceArray.length === 0) {
+        await this.getDeviceList();
+      }
+      if (this.webhookServer) {
+        // the bridge may have been restarted or reset, registering again is cheap and removes the old entry
+        await this.registerWebhook();
+      }
+      if (this.config.pinManagement) {
+        for (const lockId of Object.keys(this.pinManager.locks)) {
+          await this.pinManager.load(lockId, false).catch((e) => this.logRequestError(e, `PIN list ${lockId}`, 'warn'));
+        }
+      }
+    })()
+      .catch((e) => this.log.warn(`Bridge reconnect: ${e.message}`))
+      .finally(() => {
+        this.recovering = null;
+      });
+  }
+
+  /**
+   * Logs a failed request. "Bridge not reachable" is reported once by setBridgeReachable().
+   *
+   * @param {{ message?: string, code?: string, response?: { data?: unknown } } | undefined} error axios error
+   * @param {string} context what was requested
+   * @param {'error' | 'warn'} [level] log level
+   */
+  logRequestError(error, context, level = 'error') {
+    if (isUnreachable(error)) {
+      this.log.debug(`${context}: ${error && error.code}`);
+      return;
+    }
+    this.log[level](`${context}: ${(error && error.message) || error}`);
+    error && error.response && this.log[level](JSON.stringify(error.response.data));
+  }
+
   async sleep(ms) {
     // timers/promises instead of this.delay(): must also work while the adapter is unloading
     await wait(ms);
@@ -954,7 +1057,6 @@ class Tedee extends utils.Adapter {
     })
       .then(async (res) => {
         this.log.debug(JSON.stringify(res.data));
-        this.setStateChanged('info.connection', true, true);
         for (const device of res.data) {
           const id = device.id.toString().replace(this.FORBIDDEN_CHARS, '_');
           await this.writeDevice(id, device);
@@ -969,12 +1071,7 @@ class Tedee extends utils.Adapter {
           this.log.info('Bridge is busy. Cannot handle more requests');
           return;
         }
-        if (!error.response) {
-          // bridge not reachable (timeout, network): only a reachable bridge counts as connected
-          this.setStateChanged('info.connection', false, true);
-        }
-        this.log.warn(error);
-        error.response && this.log.warn(JSON.stringify(error.response.data));
+        this.logRequestError(error, 'Update', 'warn');
       });
   }
 
@@ -1087,8 +1184,12 @@ class Tedee extends utils.Adapter {
         this.log.debug(`Bridge response ${res.status}: ${JSON.stringify(res.data)}`);
       })
       .catch((error) => {
-        this.log.error(error);
-        error.response && this.log.error(JSON.stringify(error.response.data));
+        if (isUnreachable(error)) {
+          // the user waits for the door, so every lost command is reported
+          this.log.warn(`Command ${command} for lock ${deviceId} not sent: bridge not reachable`);
+          return;
+        }
+        this.logRequestError(error, `Command ${command} for lock ${deviceId}`);
       });
     // the result arrives by webhook, the poll is only a backup if a webhook got lost
     this.refreshTimeout && this.clearTimeout(this.refreshTimeout);
