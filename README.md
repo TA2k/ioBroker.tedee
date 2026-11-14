@@ -317,10 +317,10 @@ Webhooks: the adapter starts a small web server (port 29170 or the next free por
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-
-### **WORK IN PROGRESS**
+### 1.0.3 (2026-11-14)
 
 - (Schimi1983) Clear message if the bridge cannot be reached (e.g. new IP address), instead of many warnings; the adapter registers the webhook again and reloads the data by itself when the bridge is back
+
 ### 1.0.2 (2026-11-08)
 
 - (Schimi1983) Fix: requests to the bridge are sent one after another (the bridge rejects parallel connections), lock commands are served first

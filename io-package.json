@@ -2,8 +2,21 @@
   "common": {
     "tier": 2,
     "name": "tedee",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "news": {
+      "1.0.3": {
+        "en": "Clear message if the bridge cannot be reached (e.g. new IP address), instead of many warnings; the adapter registers the webhook again and reloads the data by itself when the bridge is back",
+        "de": "Klare Meldung, wenn die Bridge nicht erreichbar ist (z. B. neue IP-Adresse), statt vieler Warnungen; der Adapter registriert den Webhook erneut und lädt die Daten von selbst neu",
+        "ru": "Четкое сообщение о невозможности доступа к мосту (например, новый IP-адрес) вместо многочисленных предупреждений; адаптер снова регистрирует веб-хук и самостоятельно загружает данные, когда мост снова вернется",
+        "pt": "Mensagem clara se a ponte não for acessada (ex: novo endereço IP), em vez de muitos avisos; o adaptador registra o webhook novamente e recarrega os dados quando a ponte volta",
+        "nl": "Duidelijke boodschap als de bridge niet kan worden bereikt (bijvoorbeeld een nieuw IP-adres), in plaats van veel waarschuwingen; de adapter registreert de webhook opnieuw en laadt de gegevens zelf opnieuw wanneer de bridge terug is",
+        "fr": "Message clair si le pont n'est pas joignable (nouvelle adresse IP, par exemple), au lieu de nombreux avertissements ; l'adaptateur réenregistre le webhook et recharge les données tout seul au retour",
+        "it": "Messaggio chiaro se il bridge non è raggiungibile (ad es. nuovo indirizzo IP), invece di molti avvisi; l'adattatore registra nuovamente il webhook e ricarica i dati da solo",
+        "es": "Borrar mensaje si no se puede llegar al puente (por ejemplo, nueva dirección IP), en lugar de muchos avisos; el adaptador vuelve a registrar el webhook y recarga los datos solo cuando el puente vuelve",
+        "pl": "Wyczyść komunikat, jeśli nie można dotrzeć do mostu (np. nowy adres IP), zamiast wielu ostrzeżeń; adapter ponownie rejestruje webhook i sam ładuje dane po powrocie mostu",
+        "uk": "Очистіть повідомлення, якщо міст не може бути досягнутий (наприклад, нова IP-адреса), замість багатьох попереджень; адаптер знову реєструє веб-хук і сам перезавантажує дані, коли міст повернеться",
+        "zh-cn": "如果无法访问网桥（例如新的 IP 地址），则清除消息，而不是许多警告；适配器会再次注册 webhook，并在网桥返回时自行重新加载数据"
+      },
       "1.0.2": {
         "en": "Fix: requests to the bridge are sent one after another (the bridge rejects parallel connections), lock commands are served first\nFix: lock commands and PIN changes are repeated when the bridge is busy (503), so they are no longer lost",
         "de": "Fix: Anfragen an die Bridge laufen nacheinander (die Bridge lehnt parallele Verbindungen ab), Schließbefehle haben Vorrang\nFix: Schließbefehle und PIN-Änderungen werden wiederholt, wenn die Bridge beschäftigt ist (503), und gehen nicht mehr verloren",
@@ -81,19 +94,6 @@
         "pl": "Nowość: Zarządzanie kodami PIN klawiatury (wyświetlanie, tworzenie, zmianę, usuwanie), patrz sekcja „Zarządzanie kodami PIN” [#49]\nNowość: kanał `LastAction` pokazuje, kto i jak obsługiwany był zamek, włącznie z nazwą PIN [#13]\nNowość: opcjonalne ustawienie „Callback host” dla webhooków (Docker, kilka interfejsów sieciowych, IPv6)\nZmieniono ustawienia instancji: karty, teksty pomocy, tłumaczenia\nPoprawka: webhooky są zarejestrowane za pomocą adresu IP zamiast nazwy hosta\nPoprawka: webhooky innych systemów (np. Home Assistant) nie są już usuwane\nPoprawka: polecenia blokady nie są już powtarzane przy błędach i nie zawodzą z ECONNRESET\nPoprawka: tryb odblokowania jest sprawdzony, sondaż czeka na poprzednie żądanie\nPoprawka: stany blokady 3 (częściowo otwarte) i 255 (odciąganie)\nPoprawka: czyste wyłączenie, adapter został zabity po zatrzymaniu\nNode.js >= 22, js-controller >= 6.0.11 i admin >= 7.8.23 wymagane\nZaktualizowano zależności, eSlint 9, testy dla Node.js 22, 24 i 26",
         "uk": "Нове: керування PIN-кодом для PIN-кодів клавіатури (показати, створити, змінити, видалити), див. розділ «Управління PIN-кодом» [#49]\nНове: канал `LastAction` показує, хто і як працював блокування, в т.ч. ім'я PIN-коду [#13]\nНове: додаткове налаштування «Хост зворотного дзвінка» для веб-хуків (Docker, кілька мережевих інтерфейсів, IPv6)\nНалаштування екземпляра перероблено: вкладки, довідкові тексти, переклади\nВиправлення: веб-хуки реєструються за IP-адресою замість імені хоста\nВиправлення: веб-хуки інших систем (наприклад, домашній помічник) більше не видаляються\nВиправлення: команди блокування більше не повторюються при помилках і більше не виходять з ладу з ECONNRESET\nВиправлено: режим розблокування перевірено, опитування чекає попереднього запиту\nВиправлено: стан блокування 3 (частково відкритий) і 255 (розтягування)\nВиправлення: чисте відключення, адаптер був убитий при зупинці\nNode.js >= 22, js-контролер >= 6.0.11 і адміністратор >= 7.8.23 потрібні\nЗалежності оновлені, ESLint 9, тести для Node.js 22, 24 і 26",
         "zh-cn": "新增：键盘 PIN 的管理（显示、创建、更改、删除），请参阅 “PIN 管理” 部分 [#49]\n新增：频道 “LastAction” 显示锁是谁以及如何操作的，包括 PIN 名称 [#13]\n新增：可选设置 webhook 的 “回调主机”（Docker、多个网络接口、IPv6）\n重做了实例设置：选项卡、帮助文本、翻译\n修复：webhook 是使用 IP 地址而不是主机名注册的\n修复：其他系统（例如家庭助理）的网络挂钩不再被删除\n修复：锁定命令不再在出错时重复，ECONNRESET 也不会再失败\n修复：解锁模式已验证，轮询等待先前的请求\n修复：锁定状态 3（部分打开）和 255（解除）\n修复：干净关机，适配器在停止时被杀死\nNode.js >= 22，js-controller >= 6.0.11 且需要管理员 >= 7.8.23\n依赖项已更新，ESLint 9，对 Node.js 22、24 和 26 进行了测试"
-      },
-      "0.3.2": {
-        "en": "add retry when request fails",
-        "de": "Retry hinzugefügt, wenn Anfrage fehlschlägt",
-        "ru": "добавить ответ, когда запрос не работает",
-        "pt": "adicionar retry quando o pedido falhar",
-        "nl": "opnieuw proberen toevoegen wanneer verzoek mislukt",
-        "fr": "ajouter réessayer lorsque la requête échoue",
-        "it": "aggiungere retry quando la richiesta fallisce",
-        "es": "añadir retry cuando la solicitud falla",
-        "pl": "dodaj ponowną próbę, gdy żądanie się nie powiedzie",
-        "uk": "додати птицю, коли запит не вдається",
-        "zh-cn": "请求失败时添加重试"
       }
     },
     "titleLang": {
