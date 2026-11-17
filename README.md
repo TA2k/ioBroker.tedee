@@ -229,6 +229,10 @@ Usually the router has given the bridge a new IP address, and the adapter still 
 
 The adapter keeps trying. As soon as the bridge answers again, it registers the webhook again and reloads the data by itself.
 
+**"The bridge rejects the API token" in the log**
+
+Copy the token again from the Tedee app (bridge → Settings → API) into the instance settings ("Bridge token"). A single rejected request right after a restart of the bridge (e.g. firmware update) is normal and is not reported.
+
 **"Bridge is busy" in the log**
 
 The bridge handles one request at a time. This message is harmless, the next update follows automatically.
@@ -317,6 +321,12 @@ Webhooks: the adapter starts a small web server (port 29170 or the next free por
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+
+### **WORK IN PROGRESS**
+
+- (Schimi1983) Fix: lock and unlock are repeated when the busy bridge resets the connection (Bridge API 1.20)
+- (Schimi1983) Firmware version and other bridge data are updated after a restart of the bridge (e.g. firmware update) and every hour
+- (Schimi1983) A rejected API token right after a restart of the bridge is no longer reported; a wrong token gets a clear message
 ### 1.0.3 (2026-11-14)
 
 - (Schimi1983) Clear message if the bridge cannot be reached (e.g. new IP address), instead of many warnings; the adapter registers the webhook again and reloads the data by itself when the bridge is back
