@@ -1250,7 +1250,9 @@ class Tedee extends utils.Adapter {
           return;
         }
         if (!error.response && error.code === 'ECONNRESET') {
-          this.log.warn(`Command ${command} for lock ${deviceId} failed: connection reset by the busy bridge, please try again`);
+          this.log.warn(
+            `Command ${command} for lock ${deviceId} failed: connection reset by the busy bridge, please try again`,
+          );
           return;
         }
         this.logRequestError(error, `Command ${command} for lock ${deviceId}`);
