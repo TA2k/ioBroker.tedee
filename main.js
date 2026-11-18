@@ -62,9 +62,9 @@ class Tedee extends utils.Adapter {
     });
     //retry on 405-599 and timeout
     //calculate a new header for each retry
-    // @KI_HINWEIS: Lock commands (lock/unlock/pull) disable retries per request via
-    // the 'axios-retry' request option. A 405/406 or a socket reset after a command
-    // does not prove the motor did not move, so repeating it could unlock a door twice.
+    // @KI_HINWEIS: Lock commands (lock/unlock/pull) set their own retry rule per request via
+    // the 'axios-retry' request option, see sendCommand. A 405/406 or a timeout after a command
+    // does not prove the motor did not move.
 
     axiosRetry(this.httpClient, {
       retries: 3,
@@ -77,8 +77,9 @@ class Tedee extends utils.Adapter {
           this.log.debug(`Bridge busy, retrying ${cfg.url} in 1 s`);
         } else if (err.response) {
           this.log.warn(`Retrying request to ${cfg.url} after ${err.response.status} ${err.response.statusText}`);
-        } else if (isUnreachable(err)) {
-          // reported once by setBridgeReachable(), not for every retry
+        } else if (isUnreachable(err) || err.code === 'ECONNRESET') {
+          // unreachable: reported once by setBridgeReachable(); reset: the busy bridge dropped a
+          // waiting connection (Bridge API 1.20), normal operation like 503
           this.log.debug(`Retrying request to ${cfg.url} after ${err.code}`);
         } else {
           this.log.warn(`Retrying request to ${cfg.url} after ${err.code}`);
@@ -126,6 +127,12 @@ class Tedee extends utils.Adapter {
     /** @type {Promise<void> | null} running recovery after the bridge was unreachable */
     this.recovering = null;
     this.updateTimeout = null;
+    /** @type {ioBroker.Timeout | undefined | null} */
+    this.bridgeInfoTimeout = null;
+    /** time of the last GET /bridge */
+    this.lastBridgeInfo = 0;
+    /** polls in a row rejected with 401 */
+    this.tokenErrors = 0;
     this.isUnloading = false;
     this.pinManager = new PinManager(this);
     this.session = {};
@@ -310,12 +317,13 @@ class Tedee extends utils.Adapter {
     return null;
   }
   /**
-   * Reads the bridge and all locks and creates/updates their objects.
+   * Reads GET /bridge (name, firmware, WiFi, cloud connection) and updates the bridge device.
+   * Runs at start, every hour and after the bridge has restarted (e.g. firmware update).
    *
    * @returns {Promise<void>}
    */
-  async getDeviceList() {
-    this.log.info(`Getting devices from bridge ${this.config.bridgeip}`);
+  async updateBridgeInfo() {
+    this.lastBridgeInfo = Date.now();
     await this.requestClient({
       method: 'get',
       url: `http://${this.config.bridgeip}/${this.apiVersion}/bridge`,
@@ -330,6 +338,31 @@ class Tedee extends utils.Adapter {
         await this.writeFields('bridge', res.data, BRIDGE_FIELDS);
       })
       .catch((error) => this.logRequestError(error, 'Bridge info'));
+  }
+
+  /**
+   * Reads the bridge info again a few seconds after the bridge reported a new cloud connection,
+   * which happens after every restart (firmware update). Several events within that time read once.
+   */
+  scheduleBridgeInfo() {
+    if (this.isUnloading) {
+      return;
+    }
+    this.bridgeInfoTimeout && this.clearTimeout(this.bridgeInfoTimeout);
+    this.bridgeInfoTimeout = this.setTimeout(() => {
+      this.bridgeInfoTimeout = null;
+      this.updateBridgeInfo();
+    }, 10 * 1000);
+  }
+
+  /**
+   * Reads the bridge and all locks and creates/updates their objects.
+   *
+   * @returns {Promise<void>}
+   */
+  async getDeviceList() {
+    this.log.info(`Getting devices from bridge ${this.config.bridgeip}`);
+    await this.updateBridgeInfo();
     if (this.bridgeReachable === false) {
       // the lock list would fail the same way, getDeviceList() runs again when the bridge is back
       return;
@@ -715,6 +748,10 @@ class Tedee extends utils.Adapter {
       }
     } else {
       await this.writeFields('bridge', data, BRIDGE_FIELDS);
+      if (body.event === 'backend-connection-changed') {
+        // sent after every restart of the bridge, e.g. after a firmware update
+        this.scheduleBridgeInfo();
+      }
     }
   }
 
@@ -1047,6 +1084,9 @@ class Tedee extends utils.Adapter {
   }
 
   async updateDevices() {
+    if (Date.now() - (this.lastBridgeInfo || 0) > 60 * 60 * 1000) {
+      await this.updateBridgeInfo();
+    }
     await this.requestClient({
       method: 'get',
       url: `http://${this.config.bridgeip}/${this.apiVersion}/lock`,
@@ -1061,6 +1101,7 @@ class Tedee extends utils.Adapter {
           const id = device.id.toString().replace(this.FORBIDDEN_CHARS, '_');
           await this.writeDevice(id, device);
         }
+        this.tokenErrors = 0;
         if (this.config.pinManagement) {
           await this.pinManager.updateActive();
         }
@@ -1069,6 +1110,20 @@ class Tedee extends utils.Adapter {
         //check for socket hangup
         if (error.code === 'ECONNRESET') {
           this.log.info('Bridge is busy. Cannot handle more requests');
+          return;
+        }
+        if (error.response && error.response.status === 401) {
+          // @KI_HINWEIS: the token contains a timestamp. Right after a restart the clock of the
+          // bridge is not set yet and it rejects one or two polls. Only a lasting 401 means a wrong token.
+          this.tokenErrors = (this.tokenErrors || 0) + 1;
+          if (this.tokenErrors < 3) {
+            this.log.debug(`Update: token rejected (${this.tokenErrors}), bridge probably restarting`);
+          } else if (this.tokenErrors === 3) {
+            this.log.error(
+              'The bridge rejects the API token. Please check the token in the instance settings ' +
+                '(Tedee app: bridge -> Settings -> API) and that the time of the bridge is correct.',
+            );
+          }
           return;
         }
         this.logRequestError(error, 'Update', 'warn');
@@ -1085,6 +1140,7 @@ class Tedee extends utils.Adapter {
       this.isUnloading = true;
       this.refreshTimeout && this.clearTimeout(this.refreshTimeout);
       this.updateTimeout && this.clearTimeout(this.updateTimeout);
+      this.bridgeInfoTimeout && this.clearTimeout(this.bridgeInfoTimeout);
       //wait to prevent busy bridge
       await this.sleep(500);
       await this.cleanWebhooks();
@@ -1168,12 +1224,16 @@ class Tedee extends utils.Adapter {
       url: url,
       headers: headers,
       priority: true,
-      // @KI_HINWEIS: a lock command is only repeated after 503: the bridge rejected the
-      // connection before reading the request, so the lock did not move. Any other error
-      // (405, 406, reset, timeout) does not prove that, see constructor.
+      // @KI_HINWEIS: a lock command is repeated after 503 and, for lock/unlock, after a reset
+      // connection (ECONNRESET): Bridge API 1.20 says the busy bridge "answers a new one with 503 …
+      // or resets a waiting connection. Retry after a short delay in both cases." Lock and unlock
+      // twice leave the same state; pull is not repeated after a reset, a second pull would open the
+      // door again. Other errors (405, 406, timeout) do not prove that the motor did not move.
       'axios-retry': {
         retries: 3,
-        retryCondition: (error) => !!error.response && error.response.status === 503,
+        retryCondition: (error) =>
+          (!!error.response && error.response.status === 503) ||
+          (command !== 'pull' && !error.response && error.code === 'ECONNRESET'),
         retryDelay: () => 1000,
       },
     })
@@ -1187,6 +1247,12 @@ class Tedee extends utils.Adapter {
         if (isUnreachable(error)) {
           // the user waits for the door, so every lost command is reported
           this.log.warn(`Command ${command} for lock ${deviceId} not sent: bridge not reachable`);
+          return;
+        }
+        if (!error.response && error.code === 'ECONNRESET') {
+          this.log.warn(
+            `Command ${command} for lock ${deviceId} failed: connection reset by the busy bridge, please try again`,
+          );
           return;
         }
         this.logRequestError(error, `Command ${command} for lock ${deviceId}`);
