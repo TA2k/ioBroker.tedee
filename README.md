@@ -130,6 +130,8 @@ Fields for `createPin` / `updatePin`:
 
 `updatePin` keeps all fields that are not given, including the PIN code.
 
+`help` (no parameters, also without PIN management) answers `{ help, commands }`: a description of all commands and data points for AI agents (e.g. pi-agent) and script authors; `commands` lists every command with `write: true` if it changes something.
+
 #### Examples (JavaScript adapter)
 
 ```js
@@ -324,6 +326,7 @@ Webhooks: the adapter starts a small web server (port 29170 or the next free por
 
 ### **WORK IN PROGRESS**
 
+- (@GermanBluefox) Added the message "help": a description of all messages for AI agents (e.g. pi-agent), and common.supportedMessages.help
 - (Schimi1983) Fix: lock and unlock are repeated when the busy bridge resets the connection (Bridge API 1.20)
 - (Schimi1983) Firmware version and other bridge data are updated after a restart of the bridge (e.g. firmware update) and every hour
 - (Schimi1983) A rejected API token right after a restart of the bridge is no longer reported; a wrong token gets a clear message

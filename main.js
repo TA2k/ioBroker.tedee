@@ -16,6 +16,7 @@ const axiosRetry = require('axios-retry').default;
 const { PinManager, PinError } = require('./lib/pinManager');
 const { RequestQueue } = require('./lib/requestQueue');
 const { isUnreachable } = require('./lib/bridgeStatus');
+const { HELP, COMMANDS } = require('./lib/help');
 const {
   DEVICE_FIELDS,
   SETTINGS_FIELDS,
@@ -240,6 +241,10 @@ class Tedee extends utils.Adapter {
         this.sendTo(obj.from, obj.command, result, obj.callback);
       }
     };
+    if (obj.command === 'help') {
+      reply({ help: HELP, commands: COMMANDS });
+      return;
+    }
     const commands = ['getPins', 'getPin', 'createPin', 'updatePin', 'deletePin', 'refreshPins'];
     if (!commands.includes(obj.command)) {
       reply({ error: `unknown command ${obj.command}` });

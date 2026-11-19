@@ -162,7 +162,11 @@
       }
     },
     "stopTimeout": 5000,
-    "messagebox": true
+    "messagebox": true,
+    "supportedMessages": {
+      "custom": true,
+      "help": true
+    }
   },
   "encryptedNative": [
     "token"
